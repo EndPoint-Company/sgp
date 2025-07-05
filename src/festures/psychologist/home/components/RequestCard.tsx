@@ -7,18 +7,64 @@ type RequestCardProps = {
   time: string;
   onAccept: () => void;
   onReject: () => void;
+  avatarUrl: string;
 };
 
-export default function RequestCard({ name, date, time, onAccept, onReject }: RequestCardProps) {
+export default function RequestCard({
+  name,
+  date,
+  time,
+  onAccept,
+  onReject,
+  avatarUrl,
+}: RequestCardProps) {
   return (
-    <div className="bg-white border rounded p-4 shadow-sm w-60">
-      <div className="text-xs text-gray-500">{time}</div>
-      <div className="text-sm font-bold mt-1">{date}</div>
-      <div className="text-sm text-gray-700 mt-1">{name}</div>
-      <div className="mt-3 flex justify-between items-center text-green-600">
-        <button onClick={onAccept}>✔</button>
-        <button className="text-blue-600">Ver mais</button>
-        <button className="text-red-600" onClick={onReject}>❌</button>
+    <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm w-full max-w-xs">
+
+      {/* Seção superior: horário e status */}
+      <div className="flex justify-between items-center">
+        <span className="text-base text-gray-600">{time}</span>
+        <span className="text-sm font-semibold px-3 py-1 rounded-md bg-yellow-100 text-yellow-800">
+          Pendente
+        </span>
+      </div>
+
+      {/* Data em destaque */}
+      <div className="mt-3">
+        <h3 className="text-2xl font-bold text-gray-900">{date}</h3>
+      </div>
+
+      {/* Avatar e nome */}
+      <div className="flex items-center gap-3 mt-4">
+        <img
+          className="w-10 h-10 rounded-full object-cover"
+          src={avatarUrl}
+          alt={`Foto de ${name}`}
+        />
+        <span className="text-lg text-gray-700">{name}</span>
+      </div>
+
+      <hr className="my-4 border-cz01" />
+
+      {/* Ações */}
+      <div className="flex justify-between items-center">
+        <button className="text-blue-600 font-semibold text-base hover:underline">
+          Ver mais
+        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={onAccept}
+            className="bg-green-100 text-green-700 rounded-xl p-2 text-xl hover:bg-green-200"
+          >
+            ✓
+          </button>
+          <button
+            onClick={onReject}
+            className="bg-red-100 text-red-700   rounded-xl p-2 text-xl hover:bg-red-200"
+          >
+            ✕
+          </button>
+        </div>
       </div>
     </div>
   );
