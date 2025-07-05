@@ -41,6 +41,8 @@ export default function AppointmentCard({ name, date, time, status, avatarUrl }:
         />
         <span className="text-lg text-gray-700">{name}</span>
       </div>
+      
+      <hr className="my-4 border-gray-300" />
 
       {/* Botões de Ação */}
       <div className="mt-6 flex justify-between items-center">

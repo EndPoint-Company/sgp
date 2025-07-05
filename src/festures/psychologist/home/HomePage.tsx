@@ -27,6 +27,28 @@ export default function HomePage() {
       status: 'Confirmado',
       avatarUrl: 'https://i.pravatar.cc/40?u=juliana', // <-- Propriedade adicionada
     },
+    {
+      name: 'Juliana Martins',
+      date: 'Quarta, 11 Maio 2025',
+      time: '14:00 às 15:30',
+      status: 'Confirmado',
+      avatarUrl: 'https://i.pravatar.cc/40?u=juliana', // <-- Propriedade adicionada
+    },
+    {
+      name: 'Juliana Martins',
+      date: 'Quarta, 11 Maio 2025',
+      time: '14:00 às 15:30',
+      status: 'Confirmado',
+      avatarUrl: 'https://i.pravatar.cc/40?u=juliana', // <-- Propriedade adicionada
+    },
+    {
+      name: 'Juliana Martins',
+      date: 'Quarta, 11 Maio 2025',
+      time: '14:00 às 15:30',
+      status: 'Confirmado',
+      avatarUrl: 'https://i.pravatar.cc/40?u=juliana', // <-- Propriedade adicionada
+    },
+    
   ];
 
   const mockRequests = [
