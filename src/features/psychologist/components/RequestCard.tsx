@@ -1,4 +1,4 @@
-// src/features/psychologist/home/components/RequestCard.tsx
+// src/features/psychologist/components/RequestCard.tsx
 import React from 'react';
 
 type RequestCardProps = {

@@ -37,7 +37,7 @@ export default function PsychologistLayout({
   return (
     <div className="flex h-screen">
       <aside
-        className={`bg-white border-r flex flex-col transition-all duration-200 ${
+        className={`bg-white  flex flex-col transition-all duration-200 ${
           collapsed ? "w-20" : "w-64"
         }`}
       >
@@ -115,7 +115,7 @@ export default function PsychologistLayout({
         </div>
 
         {/* Rodapé */}
-        <div className="px-4 py-4 border-t">
+        <div className="px-4 py-4 ">
           <nav className="flex flex-col gap-2 text-sm text-gray-500">
             {bottomItems.map(({ label, icon: Icon, to }) => (
               <Link
