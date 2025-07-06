@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import signUpVector from "../../assets/img.jpg";
 import { User, Mail, Lock } from "lucide-react";
 import { AuthLayout } from "../../layouts/AuthLayout";
-import { Input } from "./components/Input";
+import { Input } from "../../components/ui/input";
 
 export function RegisterPage() {
   const [name, setName] = useState("");
@@ -31,7 +31,7 @@ export function RegisterPage() {
       <h2 className="text-3xl font-bold text-gray-900">Cadastre-se</h2>
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         <Input
-          icon={User}
+          icon={<User className="h-5 w-5 text-gray-400" />}
           type="text"
           placeholder="Digite seu nome completo"
           value={name}
@@ -39,7 +39,7 @@ export function RegisterPage() {
           required
         />
         <Input
-          icon={Mail}
+          icon={<Mail className="h-5 w-5 text-gray-400" />}
           type="email"
           placeholder="Digite seu email institucional"
           value={email}
@@ -47,7 +47,7 @@ export function RegisterPage() {
           required
         />
         <Input
-          icon={Lock}
+          icon={<Lock className="h-5 w-5 text-gray-400" />}
           type="password"
           placeholder="Crie uma senha"
           value={password}
@@ -55,7 +55,7 @@ export function RegisterPage() {
           required
         />
         <Input
-          icon={Lock}
+          icon={<Lock className="h-5 w-5 text-gray-400" />}
           type="password"
           placeholder="Confirmar senha"
           value={confirmPassword}

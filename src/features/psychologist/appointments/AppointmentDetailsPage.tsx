@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from "react";
 import RequestCard from "../../components/RequestCard";
-import AppointmentCard from "../../components/AppintmentCard";
-import { Input } from "../../../components/ui/input"; // Corrigido o caminho para o componente Input
-import { Button } from "../../../components/ui/button"; // Corrigido o caminho para o componente Button
+import AppointmentCard from "../../components/AppointmentCard";
+import { Input } from "../../../components/ui/input";
+import { Button } from "../../../components/ui/button";
 import {
   LayoutGrid,
   List,
@@ -151,6 +151,7 @@ export default function AppointmentDetailsPage() {
               return (
                 <RequestCard
                   key={item.id}
+                  role="Aluno(a)"
                   {...item}
                   onAccept={() => handleUpdateStatus(item.id, "confirmada")}
                   onReject={() => handleUpdateStatus(item.id, "cancelada")}
@@ -162,6 +163,7 @@ export default function AppointmentDetailsPage() {
               <AppointmentCard
                 key={item.id}
                 name={item.name}
+                role="Aluno(a)"
                 date={item.date}
                 time={item.time}
                 status={

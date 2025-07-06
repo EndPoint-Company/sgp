@@ -74,7 +74,7 @@ export default function PsychologistLayout({
                 />
                 <div className="leading-tight">
                   <h2 className="font-semibold text-sm">Ester Ravette</h2>
-                  <p className="text-xs text-gray-500">Psicóloga</p>
+                  <p className="text-xs text-gray-500">Psicólogo(a)</p>
                 </div>
               </div>
 

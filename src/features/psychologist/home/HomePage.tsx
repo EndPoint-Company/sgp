@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import AppointmentCard from "../../components/AppintmentCard";
+import AppointmentCard from "../../components/AppointmentCard";
 import RequestCard from "../../components/RequestCard";
 import {
   mockFirebaseData,
@@ -45,6 +45,7 @@ export default function HomePage() {
             <AppointmentCard
               key={appt.id}
               name={appt.name}
+              role="Aluno(a)"
               date={appt.date}
               time={appt.time}
               status="Confirmada"
@@ -63,6 +64,7 @@ export default function HomePage() {
             <RequestCard
               key={req.id}
               name={req.name}
+              role="Aluno(a)"
               date={req.date}
               time={req.time}
               avatarUrl={req.avatarUrl}

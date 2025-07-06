@@ -1,19 +1,35 @@
+// src/features/auth/LoginPage.tsx
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import loginVector from "../../assets/img.jpg";
+import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock } from "lucide-react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../services/firebase";
 import { AuthLayout } from "../../layouts/AuthLayout";
-import { Input } from "./components/Input";
+import { Input } from "../../components/ui/input";
+import loginVector from "../../assets/img.jpg";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const dados = `Email: ${email}\nSenha: ${password}`;
-    alert(dados);
+    setError(null);
+
+    try {
+      // 1. Tenta fazer o login com o Firebase Auth
+      await signInWithEmailAndPassword(auth, email, password);
+
+      // 2. Redireciona para a página principal após o login
+      navigate("/home"); 
+
+    } catch (error: any) {
+      // Trata erros comuns de login
+      setError("Email ou senha inválidos. Por favor, tente novamente.");
+      console.error("Erro no login:", error);
+    }
   };
 
   return (
@@ -23,9 +39,11 @@ export function LoginPage() {
       imagePosition="right"
     >
       <h2 className="text-3xl font-bold text-gray-900">Entre na sua conta</h2>
+      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+        {/* Seus Inputs permanecem os mesmos */}
         <Input
-          icon={Mail}
+          icon={<Mail className="h-5 w-5 text-gray-400" />}
           type="email"
           placeholder="Digite seu email"
           value={email}
@@ -33,37 +51,15 @@ export function LoginPage() {
           required
         />
         <Input
-          icon={Lock}
+          icon={<Lock className="h-5 w-5 text-gray-400" />}
           type="password"
           placeholder="Digite sua senha"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <input
-              id="rememberMe"
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-            />
-            <label
-              htmlFor="rememberMe"
-              className="ml-2 block text-sm text-gray-700"
-            >
-              Lembre de mim
-            </label>
-          </div>
-          <div className="text-sm">
-            <a href="#" className="font-medium text-blue-600 hover:underline">
-              Esqueceu a senha?
-            </a>
-          </div>
-        </div>
-
+        
+        {/* O resto do seu formulário... */}
         <div>
           <button
             type="submit"
@@ -73,22 +69,9 @@ export function LoginPage() {
           </button>
         </div>
       </form>
-
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300" />
-        </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">ou</span>
-        </div>
-      </div>
-
-      <p className="text-center text-sm text-gray-600">
+      <p className="mt-4 text-center text-sm text-gray-600">
         Não possui uma conta?{" "}
-        <Link
-          to="/register"
-          className="font-medium text-blue-600 hover:underline"
-        >
+        <Link to="/register" className="font-medium text-blue-600 hover:underline">
           Se cadastrar
         </Link>
       </p>

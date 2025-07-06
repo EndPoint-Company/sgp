@@ -30,10 +30,10 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
           ) : (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <img src="https://i.pravatar.cc/40?u=ester" alt="Avatar" className="w-8 h-8 rounded-full" />
+                <img src="https://i.pravatar.cc/40?u=marcos" alt="Avatar" className="w-8 h-8 rounded-full" />
                 <div className="leading-tight">
-                  <h2 className="font-semibold text-sm">Larissa Manoela</h2>
-                  <p className="text-xs text-gray-500">Aluno</p>
+                  <h2 className="font-semibold text-sm">Marcos Vitor</h2>
+                  <p className="text-xs text-gray-500">Aluno(a)</p>
                 </div>
               </div>
               <button onClick={() => setCollapsed(true)} className="text-gray-500"> <Menu size={18} /> </button>
