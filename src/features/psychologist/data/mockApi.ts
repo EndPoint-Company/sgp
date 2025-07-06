@@ -1,53 +1,46 @@
 import type { Consulta } from '../services/apiService';
 
+// Dados principais das consultas
 export const mockFirebaseData: Consulta[] = [
   {
     "id": "l10YBKR1cKW9WHPzg9Lv",
-    "pacienteId": "mu3Mo6I0eSSD3aWZdYte",
-    "psicologoId": "CRsiWje2vKiLsr5fCpxW",
-    "horario": "2025-07-15T14:00:00Z",
+    "pacienteId": "mu3Mo6I0eSSD3aWZdYte", // Aluno: Marcos Vitor
+    "psicologoId": "CRsiWje2vKiLsr5fCpxW", // Psicóloga: Ester Ravette
+    "horario": "2025-07-15T14:00:00Z", // Data futura para aparecer em "Próximos"
     "status": "confirmada"
   },
   {
     "id": "L33ijLuI4egijO8qAAaC",
-    "pacienteId": "2QZfL6ICZwO6UUMBN14I",
+    "pacienteId": "2QZfL6ICZwO6UUMBN14I", // Outra aluna, não deve aparecer na tela do Marcos
     "psicologoId": "CRsiWje2vKiLsr5fCpxW",
     "horario": "2025-07-21T19:30:00Z",
     "status": "aguardando aprovacao"
   },
-  {
-    "id": "53HngIRRhtUKfH1u09Ez",
-    "pacienteId": "fG7hJkL9mnOpQrStUvWx",
-    "psicologoId": "CRsiWje2vKiLsr5fCpxW",
-    "horario": "2025-07-22T10:00:00Z",
-    "status": "aguardando aprovacao"
-  },
-   {
-    "id": "pA4sD5fG6hJ7kL8mN9oP",
-    "pacienteId": "mu3Mo6I0eSSD3aWZdYte",
-    "psicologoId": "CRsiWje2vKiLsr5fCpxW",
-    "horario": "2025-06-10T11:00:00Z",
-    "status": "passada"
-  },
-  {
-    "id": "zX8cY9vA0bS1dE2fG3hI",
-    "pacienteId": "2QZfL6ICZwO6UUMBN14I",
-    "psicologoId": "CRsiWje2vKiLsr5fCpxW",
-    "horario": "2025-06-18T16:00:00Z",
-    "status": "cancelada"
-  }
+  // ... outros dados ...
 ];
 
+// Banco de dados de pacientes
 const mockPacientesDatabase: { [id: string]: { name: string; avatarUrl: string } } = {
   "mu3Mo6I0eSSD3aWZdYte": { name: "Marcos Vitor", avatarUrl: 'https://i.pravatar.cc/40?u=marcos' },
   "2QZfL6ICZwO6UUMBN14I": { name: "Juliana Martins", avatarUrl: 'https://i.pravatar.cc/40?u=juliana' },
-  "fG7hJkL9mnOpQrStUvWx": { name: "Carlos Andrade", avatarUrl: 'https://i.pravatar.cc/40?u=carlos' },
 };
 
+// MUDANÇA: Adicionado banco de dados de psicólogos
+const mockPsicologosDatabase: { [id: string]: { name: string; avatarUrl: string } } = {
+  "CRsiWje2vKiLsr5fCpxW": { name: "Ester Ravette", avatarUrl: 'https://i.pravatar.cc/40?u=ester' },
+};
+
+// Função para buscar dados do paciente
 export const getPacienteData = (pacienteId: string) => {
   return mockPacientesDatabase[pacienteId] || { name: 'Paciente Desconhecido', avatarUrl: 'https://i.pravatar.cc/40' };
 };
 
+// MUDANÇA: Adicionada função para buscar dados do psicólogo
+export const getPsicologoData = (psicologoId: string) => {
+  return mockPsicologosDatabase[psicologoId] || { name: 'Psicólogo Desconhecido', avatarUrl: 'https://i.pravatar.cc/40' };
+};
+
+// Função para formatar data e hora
 export const formatAppointmentDate = (isoString: string) => {
     const date = new Date(isoString);
     const dayOfWeek = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(date);

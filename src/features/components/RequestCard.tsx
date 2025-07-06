@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Check, X } from 'lucide-react';
-import ConfirmationModalAccept from '../../../components/ui/confirmartion/ConfirmationModalAccept';
-import ConfirmationModal from '../../../components/ui/confirmartion/ConfirmationModal'; 
+import ConfirmationModalAccept from '../../components/ui/confirmartion/ConfirmationModalAccept';
+import ConfirmationModal from '../../components/ui/confirmartion/ConfirmationModal'; 
 
 type RequestCardProps = {
   name: string;
+  role?: string;
   date: string;
   time: string;
   onAccept: () => void;
@@ -14,6 +15,7 @@ type RequestCardProps = {
 
 export default function RequestCard({
   name,
+  role,
   date,
   time,
   onAccept,
@@ -59,7 +61,10 @@ export default function RequestCard({
             src={avatarUrl}
             alt={`Foto de ${name}`}
           />
-          <span className="text-lg text-gray-700">{name}</span>
+          <div>
+            <p className="font-semibold text-gray-800">{name}</p>
+            {role && <p className="text-xs text-gray-500">{role}</p>}
+          </div>
         </div>
 
         <hr className="my-4 border-gray-200" />
