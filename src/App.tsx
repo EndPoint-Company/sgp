@@ -8,7 +8,7 @@ import Login from "./pages/auth/Login";
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/psychologist/home" />} />
+      <Route path="/" element={<Navigate to="/register" />} />
       <Route path="/psychologist/home" element={<Home />} />
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import loginVector from "../../assets/img.jpg";
 import { Mail, Lock } from "lucide-react";
+import loginVector from "../../assets/img.jpg";
 import { AuthLayout } from "../../layouts/AuthLayout";
-import { Input } from "./components/Input";
+import { Input } from "../../components/ui/input";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
@@ -25,7 +25,7 @@ export function LoginPage() {
       <h2 className="text-3xl font-bold text-gray-900">Entre na sua conta</h2>
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         <Input
-          icon={Mail}
+          icon={<Mail className="h-5 w-5 text-gray-400" />}
           type="email"
           placeholder="Digite seu email"
           value={email}
@@ -33,7 +33,7 @@ export function LoginPage() {
           required
         />
         <Input
-          icon={Lock}
+          icon={<Lock className="h-5 w-5 text-gray-400" />}
           type="password"
           placeholder="Digite sua senha"
           value={password}
