@@ -1,28 +1,38 @@
-import React, { useState, useMemo } from 'react';
-import AppointmentCard from '../components/AppintmentCard';
-import RequestCard from '../components/RequestCard';
-import { mockFirebaseData, getPacienteData, formatAppointmentDate } from '../data/mockApi';
+import React, { useState, useMemo } from "react";
+import AppointmentCard from "../../components/AppintmentCard";
+import RequestCard from "../../components/RequestCard";
+import {
+  mockFirebaseData,
+  getPacienteData,
+  formatAppointmentDate,
+} from "../data/mockApi";
 // CORREÇÃO: Adicionada a palavra-chave 'type' para a importação da interface.
-import type { Consulta } from '../services/apiService'; // Reutilizamos a tipagem
+import type { Consulta } from "../services/apiService"; // Reutilizamos a tipagem
 
 export default function HomePage() {
   const [consultas, setConsultas] = useState<Consulta[]>(mockFirebaseData);
 
   const handleUpdateRequest = (consultaId: string) => {
-    setConsultas(prevConsultas => prevConsultas.filter(c => c.id !== consultaId));
-    alert('Ação registrada! A lista foi atualizada.');
+    setConsultas((prevConsultas) =>
+      prevConsultas.filter((c) => c.id !== consultaId)
+    );
+    alert("Ação registrada! A lista foi atualizada.");
   };
 
   const { upcomingAppointments, pendingRequests } = useMemo(() => {
-    const processed = consultas.map(item => ({
+    const processed = consultas.map((item) => ({
       ...item,
       ...getPacienteData(item.pacienteId),
       ...formatAppointmentDate(item.horario),
     }));
-    
+
     return {
-      upcomingAppointments: processed.filter(item => item.status === 'confirmada'),
-      pendingRequests: processed.filter(item => item.status === 'aguardando aprovacao'),
+      upcomingAppointments: processed.filter(
+        (item) => item.status === "confirmada"
+      ),
+      pendingRequests: processed.filter(
+        (item) => item.status === "aguardando aprovacao"
+      ),
     };
   }, [consultas]); // O useMemo agora depende do estado local 'consultas'
 

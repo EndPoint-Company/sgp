@@ -4,6 +4,7 @@ import Home from "./pages/psychologist/Home";
 import Appointments from "./pages/psychologist/Appintments";
 import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
+import StudentHomePage from './pages/student/Home';
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
       <Route path="/psychologist/appointments" element={<Appointments />} />
+      <Route path="/student/home" element={<StudentHomePage />} />
     </Routes>
   );
 }
