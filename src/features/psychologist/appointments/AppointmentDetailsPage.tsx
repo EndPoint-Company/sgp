@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import RequestCard from '../components/RequestCard';
 import AppointmentCard from '../components/AppintmentCard';
-import { Input } from '../../../components/ui/input'; // Corrigido o caminho para o componente Input
-import { Button } from '../../../components/ui/button'; // Corrigido o caminho para o componente Button
+import { Input } from '../../../components/ui/input'; 
+import { Button } from '../../../components/ui/button'; 
 import { LayoutGrid, List, CalendarDays, RefreshCw, X, Check, Search, Plus } from 'lucide-react';
 import { mockFirebaseData, getPacienteData, formatAppointmentDate } from '../data/mockApi';
 import type { Consulta } from '../services/apiService'; 
