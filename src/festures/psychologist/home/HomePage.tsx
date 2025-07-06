@@ -1,7 +1,7 @@
 // src/features/psychologist/home/HomePage.tsx
 import React from 'react';
-import AppointmentCard from './components/AppintmentCard';
-import RequestCard from './components/RequestCard';
+import AppointmentCard from '../components/AppintmentCard';
+import RequestCard from '../components/RequestCard';
 
 
 export default function HomePage() {
@@ -48,7 +48,7 @@ export default function HomePage() {
       status: 'Confirmado',
       avatarUrl: 'https://i.pravatar.cc/40?u=juliana', // <-- Propriedade adicionada
     },
-    
+
   ];
 
   const mockRequests = [

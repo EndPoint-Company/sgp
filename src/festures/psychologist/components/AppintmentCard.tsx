@@ -1,4 +1,4 @@
-// src/features/psychologist/home/components/AppointmentCard.tsx
+// src/features/psychologist/components/AppointmentCard.tsx
 import React from 'react';
 
 type AppointmentCardProps = {
