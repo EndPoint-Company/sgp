@@ -1,9 +1,9 @@
 // src/App.tsx
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Home from './pages/psychologist/Home';
-import Appointments from './pages/psychologist/Appintments'; // 1. Import the new component
-import Register from './pages/Register';
-import Login from './pages/Login';
+import { Routes, Route, Navigate } from "react-router-dom";
+import Home from "./pages/psychologist/Home";
+import Appointments from "./pages/psychologist/Appintments";
+import Register from "./pages/auth/Register";
+import Login from "./pages/auth/Login";
 
 export default function App() {
   return (
