@@ -1,25 +1,57 @@
+// src/features/auth/RegisterPage.tsx
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import signUpVector from "../../assets/img.jpg";
+import { Link, useNavigate } from "react-router-dom";
 import { User, Mail, Lock } from "lucide-react";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { auth } from "../../services/firebase";
 import { AuthLayout } from "../../layouts/AuthLayout";
 import { Input } from "../../components/ui/input";
+import signUpVector from "../../assets/img.jpg";
 
 export function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState<string | null>(null); // Para exibir erros
+  const navigate = useNavigate();
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError(null);
+
     if (password !== confirmPassword) {
-      alert("As senhas não coincidem!");
+      setError("As senhas não coincidem!");
       return;
     }
-    const dados = `Nome: ${name}\nEmail: ${email}\nSenha: ${password}`;
-    alert(dados);
+
+    try {
+      // 1. Cria o usuário no Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // 2. Salva dados adicionais (nome) no Firestore
+      // A boa prática é usar o ID do usuário (uid) como ID do documento
+      await setDoc(doc(db, "users", user.uid), {
+        name: name,
+        email: email,
+      });
+
+      // 3. Redireciona o usuário para a página principal ou de login
+      navigate("/home"); // Ou para onde você quiser que ele vá após o cadastro
+
+    } catch (error: any) {
+      // Trata erros comuns do Firebase
+      if (error.code === 'auth/email-already-in-use') {
+        setError("Este email já está em uso.");
+      } else if (error.code === 'auth/weak-password') {
+        setError("A senha deve ter no mínimo 6 caracteres.");
+      } else {
+        setError("Ocorreu um erro ao criar a conta. Tente novamente.");
+      }
+      console.error("Erro no cadastro:", error);
+    }
   };
 
   return (
@@ -29,7 +61,10 @@ export function RegisterPage() {
       imagePosition="left"
     >
       <h2 className="text-3xl font-bold text-gray-900">Cadastre-se</h2>
+      {/* Exibe a mensagem de erro */}
+      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+        {/* Seus Inputs permanecem os mesmos */}
         <Input
           icon={<User className="h-5 w-5 text-gray-400" />}
           type="text"
@@ -62,23 +97,8 @@ export function RegisterPage() {
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
         />
-
-        <div className="flex items-center">
-          <input
-            id="rememberMe"
-            type="checkbox"
-            checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
-            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-          />
-          <label
-            htmlFor="rememberMe"
-            className="ml-2 block text-sm text-gray-700"
-          >
-            Lembre de mim
-          </label>
-        </div>
-
+        
+        {/* O resto do seu formulário... */}
         <div>
           <button
             type="submit"
@@ -88,17 +108,7 @@ export function RegisterPage() {
           </button>
         </div>
       </form>
-
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300" />
-        </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">ou</span>
-        </div>
-      </div>
-
-      <p className="text-center text-sm text-gray-600">
+      <p className="mt-4 text-center text-sm text-gray-600">
         Já possui uma conta?{" "}
         <Link to="/login" className="font-medium text-blue-600 hover:underline">
           Entrar
