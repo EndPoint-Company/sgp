@@ -3,7 +3,7 @@ import ConfirmationModal from "../../components/ui/confirmartion/ConfirmationMod
 
 type AppointmentCardProps = {
   name: string;
-  role?: string; // MUDANÇA: Adicionada a prop opcional 'role'
+  role?: string; 
   date: string;
   time: string;
   status: string;
@@ -13,7 +13,7 @@ type AppointmentCardProps = {
 
 export default function AppointmentCard({
   name,
-  role, // MUDANÇA: Recebendo a nova prop
+  role,
   date,
   time,
   status,
@@ -47,7 +47,7 @@ export default function AppointmentCard({
         </div>
 
         <div className="mt-3">
-          <h3 className="text-2xl font-bold text-gray-900">{date}</h3>
+          <h3 className="text-xl font-bold text-gray-900">{date}</h3>
         </div>
 
         {/* MUDANÇA: Estrutura para nome e papel */}

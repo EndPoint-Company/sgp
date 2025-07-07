@@ -38,14 +38,14 @@ export default function HomePage() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold mb-4">Próximos Atendimentos</h1>
+      <h1 className="text-2xl font-bold mb-4">Próximos Atendimentos</h1>
       <div className="flex gap-4 flex-wrap mb-10">
         {upcomingAppointments.length > 0 ? (
           upcomingAppointments.map((appt) => (
             <AppointmentCard
               key={appt.id}
               name={appt.name}
-              role="Aluno(a)"
+              role="Paciente"
               date={appt.date}
               time={appt.time}
               status="Confirmada"
@@ -57,14 +57,14 @@ export default function HomePage() {
         )}
       </div>
 
-      <h1 className="text-xl font-bold mb-4">Solicitações</h1>
+      <h1 className="text-2xl font-bold mb-4">Solicitações</h1>
       <div className="flex gap-4 flex-wrap">
         {pendingRequests.length > 0 ? (
           pendingRequests.map((req) => (
             <RequestCard
               key={req.id}
               name={req.name}
-              role="Aluno(a)"
+              role="Paciente"
               date={req.date}
               time={req.time}
               avatarUrl={req.avatarUrl}

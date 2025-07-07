@@ -74,7 +74,7 @@ export default function AppointmentDetailsPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold mb-4">Agendamentos</h1>
+      <h1 className="text-2xl font-bold mb-4">Agendamentos</h1>
 
       <div className="flex items-center gap-6 border-b border-gray-200 mb-4 text-sm">
         <button
@@ -151,7 +151,7 @@ export default function AppointmentDetailsPage() {
               return (
                 <RequestCard
                   key={item.id}
-                  role="Aluno(a)"
+                  role="Paciente"
                   {...item}
                   onAccept={() => handleUpdateStatus(item.id, "confirmada")}
                   onReject={() => handleUpdateStatus(item.id, "cancelada")}
@@ -163,7 +163,7 @@ export default function AppointmentDetailsPage() {
               <AppointmentCard
                 key={item.id}
                 name={item.name}
-                role="Aluno(a)"
+                role="Paciente"
                 date={item.date}
                 time={item.time}
                 status={

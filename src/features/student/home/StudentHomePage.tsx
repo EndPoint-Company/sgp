@@ -87,7 +87,7 @@ export default function StudentHomePage() {
       <div>
 
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">Próximos Atendimentos</h2>
+          <h2 className="text-2xl font-bold">Próximos Atendimentos</h2>
           <button
             onClick={() => setIsModalOpen(true)}
             className="inline-flex items-center justify-center h-10 px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 shadow-sm"
@@ -116,7 +116,7 @@ export default function StudentHomePage() {
           )}
         </div>
 
-        <h2 className="text-xl font-bold mb-4">Solicitações</h2>
+        <h2 className="text-2xl font-bold mb-4">Solicitações</h2>
         <div className="flex gap-4 flex-wrap justify-center sm:justify-start">
           {pendingRequests.length > 0 ? (
             pendingRequests.map((req) => (
