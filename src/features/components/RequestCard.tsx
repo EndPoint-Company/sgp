@@ -51,7 +51,7 @@ export default function RequestCard({
 
         {/* Data */}
         <div className="mt-3">
-          <h3 className="text-2xl font-bold text-gray-900">{date}</h3>
+          <h3 className="text-xl font-bold text-gray-900">{date}</h3>
         </div>
 
         {/* Avatar e nome */}

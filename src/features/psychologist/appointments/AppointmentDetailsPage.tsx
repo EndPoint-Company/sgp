@@ -74,7 +74,7 @@ export default function AppointmentDetailsPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold mb-4">Agendamentos</h1>
+      <h1 className="text-2xl font-bold mb-4">Agendamentos</h1>
 
       <div className="flex items-center gap-6 border-b border-gray-200 mb-4 text-sm">
         <button
