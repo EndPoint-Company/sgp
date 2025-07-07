@@ -33,7 +33,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                 <img src="https://i.pravatar.cc/40?u=marcos" alt="Avatar" className="w-8 h-8 rounded-full" />
                 <div className="leading-tight">
                   <h2 className="font-semibold text-sm">Marcos Vitor</h2>
-                  <p className="text-xs text-gray-500">Aluno(a)</p>
+                  <p className="text-xs text-gray-500">Paciente</p>
                 </div>
               </div>
               <button onClick={() => setCollapsed(true)} className="text-gray-500"> <Menu size={18} /> </button>

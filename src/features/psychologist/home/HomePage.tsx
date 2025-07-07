@@ -45,7 +45,7 @@ export default function HomePage() {
             <AppointmentCard
               key={appt.id}
               name={appt.name}
-              role="Aluno(a)"
+              role="Paciente"
               date={appt.date}
               time={appt.time}
               status="Confirmada"
@@ -64,7 +64,7 @@ export default function HomePage() {
             <RequestCard
               key={req.id}
               name={req.name}
-              role="Aluno(a)"
+              role="Paciente"
               date={req.date}
               time={req.time}
               avatarUrl={req.avatarUrl}

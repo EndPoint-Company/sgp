@@ -151,7 +151,7 @@ export default function AppointmentDetailsPage() {
               return (
                 <RequestCard
                   key={item.id}
-                  role="Aluno(a)"
+                  role="Paciente"
                   {...item}
                   onAccept={() => handleUpdateStatus(item.id, "confirmada")}
                   onReject={() => handleUpdateStatus(item.id, "cancelada")}
@@ -163,7 +163,7 @@ export default function AppointmentDetailsPage() {
               <AppointmentCard
                 key={item.id}
                 name={item.name}
-                role="Aluno(a)"
+                role="Paciente"
                 date={item.date}
                 time={item.time}
                 status={
