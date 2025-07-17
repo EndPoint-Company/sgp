@@ -1,12 +1,11 @@
-// src/features/auth/LoginPage.tsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock } from "lucide-react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../services/firebase";
+import { Mail, Lock, AlertTriangle } from "lucide-react";
 import { AuthLayout } from "../../layouts/AuthLayout";
 import { Input } from "../../components/ui/input";
 import loginVector from "../../assets/img.jpg";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../services/firebase";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
@@ -19,15 +18,20 @@ export function LoginPage() {
     setError(null);
 
     try {
-      // 1. Tenta fazer o login com o Firebase Auth
       await signInWithEmailAndPassword(auth, email, password);
-
-      // 2. Redireciona para a página principal após o login
-      navigate("/home"); 
-
+      if (email === "ester@gmail.com") {
+        navigate("/psychologist/home");
+      } else {
+        navigate("/student/home");
+      }
     } catch (error: any) {
-      // Trata erros comuns de login
-      setError("Email ou senha inválidos. Por favor, tente novamente.");
+      const errorMessage = "Email ou senha inválidos. Tente novamente.";
+      setError(errorMessage);
+
+      setTimeout(() => {
+        setError(null);
+      }, 4000);
+
       console.error("Erro no login:", error);
     }
   };
@@ -38,10 +42,16 @@ export function LoginPage() {
       imageAlt="Ilustração de login"
       imagePosition="right"
     >
+      {error && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-red-100 text-red-800 p-4 rounded-lg shadow-lg">
+          <AlertTriangle className="w-5 h-5" />
+          <p className="text-sm font-medium">{error}</p>
+        </div>
+      )}
+
       <h2 className="text-3xl font-bold text-gray-900">Entre na sua conta</h2>
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-        {/* Seus Inputs permanecem os mesmos */}
         <Input
           icon={<Mail className="h-5 w-5 text-gray-400" />}
           type="email"
@@ -58,8 +68,6 @@ export function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        
-        {/* O resto do seu formulário... */}
         <div>
           <button
             type="submit"
@@ -69,9 +77,13 @@ export function LoginPage() {
           </button>
         </div>
       </form>
+
       <p className="mt-4 text-center text-sm text-gray-600">
         Não possui uma conta?{" "}
-        <Link to="/register" className="font-medium text-blue-600 hover:underline">
+        <Link
+          to="/register"
+          className="font-medium text-blue-600 hover:underline"
+        >
           Se cadastrar
         </Link>
       </p>

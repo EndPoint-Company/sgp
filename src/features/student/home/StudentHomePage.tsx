@@ -22,7 +22,6 @@ export default function StudentHomePage() {
         c.id === consultaId ? { ...c, status: "cancelada" } : c
       )
     );
-    alert("Seu atendimento foi cancelado.");
   };
 
   const handleCreateRequest = (data: {

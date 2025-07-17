@@ -18,8 +18,8 @@ import {
   mockFirebaseData,
   getPsicologoData,
   formatAppointmentDate,
-} from "../../psychologist/data/mockApi"; // Ajuste o caminho se necessário
-import type { Consulta } from "../../psychologist/services/apiService"; // Ajuste o caminho
+} from "../../psychologist/data/mockApi"; 
+import type { Consulta } from "../../psychologist/services/apiService"; 
 
 const ID_ALUNO_LOGADO = "mu3Mo6I0eSSD3aWZdYte"; 
 
@@ -31,7 +31,7 @@ export default function StudentAppointmentsPage() {
 
   const handleCancelAppointment = (consultaId: string) => {
     setConsultas((prev) => prev.map((c) => (c.id === consultaId ? { ...c, status: "cancelada" } : c)));
-    alert("Seu atendimento foi cancelado.");
+  
   };
 
   const handleCreateRequest = (data: { date: Date; time: string; description: string; }) => {
@@ -48,7 +48,6 @@ export default function StudentAppointmentsPage() {
     setConsultas((prev) => [...prev, novaConsulta]);
   };
 
-  // Lógica de dados centralizada e correta
   const listsByStatus = useMemo(() => {
     const studentConsultas = consultas.filter((c) => c.pacienteId === ID_ALUNO_LOGADO);
     const processed = studentConsultas.map((item) => {
@@ -88,7 +87,6 @@ export default function StudentAppointmentsPage() {
       </Modal>
 
       <div>
-        {/* Cabeçalho da página, igual ao da home */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Meus Atendimentos</h1>
           <Button onClick={() => setIsModalOpen(true)}>
@@ -97,7 +95,6 @@ export default function StudentAppointmentsPage() {
           </Button>
         </div>
 
-        {/* Abas de navegação */}
         <div className="flex items-center gap-6 border-b border-gray-200 mb-6 text-sm">
           <button onClick={() => setActiveTab("agendados")} className={`flex items-center gap-1.5 pb-3 ${activeTab === "agendados" ? "text-blue-600 font-semibold border-b-2 border-blue-600" : "text-gray-500"}`}>
             <Check className="w-4 h-4" /> Agendados
@@ -113,7 +110,6 @@ export default function StudentAppointmentsPage() {
           </button>
         </div>
 
-        {/* Barra de Ações e Busca, igual à do psicólogo */}
         <div className="flex flex-wrap md:flex-nowrap md:items-center justify-between gap-4 mb-6">
           <Input
             icon={<Search className="w-4 h-4 text-gray-400" />}
@@ -152,7 +148,7 @@ export default function StudentAppointmentsPage() {
               />
             ))
           ) : (
-            <div className="col-span-full text-center py-10">
+            <div className="col-span-full text-center">
               <p className="text-gray-500">Nenhum atendimento encontrado nesta categoria.</p>
             </div>
           )}
