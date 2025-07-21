@@ -1,25 +1,59 @@
+// src/features/auth/RegisterPage.tsx
+
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import signUpVector from "../../assets/img.jpg";
+import { Link, useNavigate } from "react-router-dom";
 import { User, Mail, Lock } from "lucide-react";
 import { AuthLayout } from "../../layouts/AuthLayout";
 import { Input } from "../../components/ui/input";
+import signUpVector from "../../assets/img.jpg";
+
+// MUDANÇAS: Importações do Firebase
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth } from "../../services/firebase"; 
 
 export function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  // MUDANÇA: A função agora é assíncrona para esperar o Firebase
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError(null); // Limpa erros anteriores
+
     if (password !== confirmPassword) {
-      alert("As senhas não coincidem!");
+      setError("As senhas não coincidem.");
       return;
     }
-    const dados = `Nome: ${name}\nEmail: ${email}\nSenha: ${password}`;
-    alert(dados);
+
+    try {
+      // 1. Cria o usuário com email e senha
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // 2. Atualiza o perfil do usuário recém-criado para adicionar o nome
+      await updateProfile(userCredential.user, {
+        displayName: name,
+      });
+
+      console.log("Usuário cadastrado com sucesso:", userCredential.user);
+      
+      // 3. Redireciona para a home do aluno após o sucesso
+      navigate("/student/home");
+
+    } catch (error: any) {
+      // Trata erros comuns de cadastro
+      if (error.code === 'auth/email-already-in-use') {
+        setError("Este email já está em uso.");
+      } else if (error.code === 'auth/weak-password') {
+        setError("A senha é muito fraca. Use pelo menos 6 caracteres.");
+      } else {
+        setError("Ocorreu um erro ao criar a conta. Tente novamente.");
+      }
+      console.error("Erro no cadastro:", error);
+    }
   };
 
   return (
@@ -29,6 +63,9 @@ export function RegisterPage() {
       imagePosition="left"
     >
       <h2 className="text-3xl font-bold text-gray-900">Cadastre-se</h2>
+      {/* Exibe a mensagem de erro, se houver */}
+      {error && <p className="mt-4 text-sm text-red-600 bg-red-50 p-3 rounded-md">{error}</p>}
+      
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         <Input
           icon={<User className="h-5 w-5 text-gray-400" />}
@@ -49,7 +86,7 @@ export function RegisterPage() {
         <Input
           icon={<Lock className="h-5 w-5 text-gray-400" />}
           type="password"
-          placeholder="Crie uma senha"
+          placeholder="Crie uma senha (mín. 6 caracteres)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -62,23 +99,7 @@ export function RegisterPage() {
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
         />
-
-        <div className="flex items-center">
-          <input
-            id="rememberMe"
-            type="checkbox"
-            checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
-            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-          />
-          <label
-            htmlFor="rememberMe"
-            className="ml-2 block text-sm text-gray-700"
-          >
-            Lembre de mim
-          </label>
-        </div>
-
+        
         <div>
           <button
             type="submit"
@@ -89,16 +110,7 @@ export function RegisterPage() {
         </div>
       </form>
 
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300" />
-        </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">ou</span>
-        </div>
-      </div>
-
-      <p className="text-center text-sm text-gray-600">
+      <p className="mt-6 text-center text-sm text-gray-600">
         Já possui uma conta?{" "}
         <Link to="/login" className="font-medium text-blue-600 hover:underline">
           Entrar
