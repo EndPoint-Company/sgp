@@ -7,7 +7,7 @@ export const mockFirebaseData: Consulta[] = [
     "pacienteId": "mu3Mo6I0eSSD3aWZdYte", // Aluno: Marcos Vitor
     "psicologoId": "CRsiWje2vKiLsr5fCpxW", // Psicóloga: Ester Ravette
     "horario": "2025-07-15T14:00:00Z", // Data futura para aparecer em "Próximos"
-    "status": "confirmada"
+    "status": "passada"
   },
   {
     "id": "L33ijLuI4egijO8qAAaC",
@@ -15,6 +15,20 @@ export const mockFirebaseData: Consulta[] = [
     "psicologoId": "CRsiWje2vKiLsr5fCpxW",
     "horario": "2025-07-21T19:30:00Z",
     "status": "aguardando aprovacao"
+  },
+  {
+    "id": "L33ijLuI4egijO8qAAaC",
+    "pacienteId": "2QZfL6ICZwO6UUMBN14I", // Outra aluna, não deve aparecer na tela do Marcos
+    "psicologoId": "CRsiWje2vKiLsr5fCpxW",
+    "horario": "2025-07-29T15:30:00Z",
+    "status": "confirmada"
+  },
+  {
+    "id": "L33ijLuI4egijO8qAAaC",
+    "pacienteId": "2QZfL6ICZwO6UUMBN14I", // Outra aluna, não deve aparecer na tela do Marcos
+    "psicologoId": "CRsiWje2vKiLsr5fCpxW",
+    "horario": "2025-07-29T15:30:00Z",
+    "status": "confirmada"
   },
   // ... outros dados ...
 ];

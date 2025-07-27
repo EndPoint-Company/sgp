@@ -86,12 +86,12 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
             {eventsForDay.length > 0 ? (
               <ul className="space-y-2">
                 {eventsForDay.map(event => (
-                  <li key={event.id} className="bg-blue-50 p-3 rounded-md text-sm">
+                  <li key={event.id} className="bg-slate-50 p-3 rounded-md text-sm">
                     <div className="flex justify-between items-center mb-1">
-                      <p className="font-medium text-blue-800">{new Date(event.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                      <p className="font-medium text-gray-600">{new Date(event.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
                       {getStatusChip(event.status)}
                     </div>
-                    <p className="text-blue-700">{event.title}</p>
+                    <p className="text-gray-700 font-medium">{event.title}</p>
                   </li>
                 ))}
               </ul>
@@ -134,7 +134,7 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
             
             <button 
               onClick={() => setConfirmModalOpen(true)}
-              className="w-full inline-flex items-center justify-center h-10 px-4 py-2 rounded-md bg-red-50 text-red-700 text-sm font-medium hover:bg-red-100"
+              className="w-full inline-flex items-center justify-center h-10 px-4 py-2 rounded-md bg-red-500 text-white text-sm font-medium hover:bg-red-700"
             >
               <Ban className="w-4 h-4 mr-2" />
               Bloquear Dia

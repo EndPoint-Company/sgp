@@ -380,46 +380,72 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
                       {monthNames[month]}
                     </span>
                   )}
-                  <div className="absolute inset-x-0 top-7 bottom-0 overflow-y-auto custom-scrollbar px-1 pt-1 sm:top-8 lg:top-12">
-                    <div className="flex flex-col gap-1">
-                      {(eventsByDate[dateKey] || []).map((event) => {
-                        const personToShow =
-                          role === "aluno"
-                            ? getPsicologoData(event.psicologoId)
-                            : getPacienteData(event.pacienteId);
 
-                        let pillColorClasses = "";
-                        switch (event.status) {
-                          case "confirmada":
-                            pillColorClasses = "bg-blue-100 text-blue-800";
-                            break;
-                          case "aguardando aprovacao":
-                            pillColorClasses = "bg-yellow-100 text-yellow-800";
-                            break;
-                          case "cancelada":
-                            pillColorClasses = "bg-red-100 text-red-800";
-                            break;
-                          case "passada":
-                            pillColorClasses = "bg-gray-200 text-gray-700";
-                            break;
-                          default:
-                            pillColorClasses = "bg-gray-100 text-gray-800";
-                        }
+                  <div className="absolute inset-x-0 top-7 bottom-0 overflow-hidden px-1 pt-1 sm:top-8 lg:top-12">
+                    <div className="flex flex-col gap-1">
+                      {(() => {
+                        const dayEvents = eventsByDate[dateKey] || [];
+                        const totalEvents = dayEvents.length;
+
+                        if (totalEvents === 0) return null;
+
+                        const displayLimit = totalEvents > 2 ? 1 : 2;
+                        const eventsToDisplay = dayEvents.slice(
+                          0,
+                          displayLimit
+                        );
+                        const remainingCount =
+                          totalEvents - eventsToDisplay.length;
 
                         return (
-                          <div
-                            key={event.id}
-                            className={`flex items-center rounded px-1.5 py-0.5 text-xs whitespace-nowrap ${pillColorClasses}`}
-                          >
-                            <span className="font-semibold">
-                              {formatEventTime(event.horario)}
-                            </span>
-                            <span className="ml-1 truncate">
-                              {personToShow?.name || "..."}
-                            </span>
-                          </div>
+                          <>
+                            {eventsToDisplay.map((event) => {
+                              const personToShow =
+                                role === "aluno"
+                                  ? getPsicologoData(event.psicologoId)
+                                  : getPacienteData(event.pacienteId);
+
+                              let pillColorClasses =
+                                "bg-gray-100 text-gray-800";
+                              switch (event.status) {
+                                case "confirmada":
+                                  pillColorClasses =
+                                    "bg-blue-100 text-blue-800";
+                                  break;
+                                case "aguardando aprovacao":
+                                  pillColorClasses =
+                                    "bg-yellow-100 text-yellow-800";
+                                  break;
+                                case "passada":
+                                  pillColorClasses =
+                                    "bg-slate-200 text-slate-500";
+                                  break;
+                              }
+
+                              return (
+                                <div
+                                  key={event.id}
+                                  className={`flex items-center rounded px-1.5 py-0.5 text-xs whitespace-nowrap ${pillColorClasses}`}
+                                >
+                                  <span className="font-semibold">
+                                    {formatEventTime(event.horario)}
+                                  </span>
+                                  <span className="ml-1 truncate">
+                                    {personToShow?.name || "..."}
+                                  </span>
+                                </div>
+                              );
+                            })}
+
+                            {remainingCount > 0 && (
+                              <div className="text-xs font-medium text-blue-800 px-1.5 py-0.5 ">
+                                + {remainingCount}{" "}
+                                {remainingCount > 1 ? "outros" : "outro"}
+                              </div>
+                            )}
+                          </>
                         );
-                      })}
+                      })()}
                     </div>
                   </div>
                   {role === "aluno" && isClickable && !isPast && (
