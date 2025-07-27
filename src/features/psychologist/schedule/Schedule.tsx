@@ -34,7 +34,7 @@ const [toast, setToast] = useState({ isVisible: false, message: '' });
   const currentUserId = "CRsiWje2vKiLsr5fCpxW";
 
   const userEvents: Consulta[] = mockFirebaseData.filter(
-    (event) => event.psicologoId === currentUserId
+      (event) => event.psicologoId === currentUserId && event.status === 'confirmada'
   );
 
   const handleBlockDay = (dayToBlock: Date) => {
@@ -201,17 +201,24 @@ const handleCloseTimePanel = () => {
 
         <div className="flex-1 min-h-0">
           <ContinuousCalendar
+            // Essencial para definir o comportamento e visual
+            role="psicologo"
+
+            // Props de dados
             events={userEvents}
-            role={userRole}
-            currentUserId={currentUserId}
+            availability={availability}
+
+            // Props de estado para o modo de seleção do psicólogo
             isSelectionMode={isSelectionMode}
             selectedPendingDays={pendingSelectedDays}
-            onPendingDaySelect={handlePendingDaySelect}
-            availability={availability}
-            onDayClick={handleDayClick}
             viewingDay={selectedDayForDetail}
-            className={isSidebarOpen ? "rounded-tr-none" : "rounded-tr-2xl"}
-          />
+
+            // Props de ações (handlers)
+            onDayClick={handleDayClick}
+            onPendingDaySelect={handlePendingDaySelect}
+
+            // Prop para o visual conectado à sidebar
+            className={isSidebarOpen ? "rounded-tr-none" : "rounded-tr-2xl"} currentUserId={""}          />
         </div>
 
         <div className={` flex-shrink-0 bg-white p-4 border-t border-gray-200 

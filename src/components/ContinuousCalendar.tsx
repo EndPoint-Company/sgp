@@ -25,33 +25,30 @@ const monthNames = [
 ];
 
 interface ContinuousCalendarProps {
-  onClick?: (_day: number, _month: number, _year: number) => void;
-  showAddIconInDay?: boolean;
-  onButtonClick?: () => void;
-  events?: Consulta[];
   role: "aluno" | "psicologo";
   currentUserId: string;
+  events?: Consulta[];
   availability?: Record<string, string[]>;
+  onDayClick: (date: Date) => void;
+
+  onAddClick?: (date: Date) => void;
+  onPendingDaySelect?: (date: Date) => void;
   isSelectionMode?: boolean;
   selectedPendingDays?: Date[];
-  onPendingDaySelect?: (date: Date) => void;
-  onDayClick?: (date: Date) => void;
   viewingDay?: Date | null;
   className?: string;
 }
 
 export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
-  onClick,
-  showAddIconInDay = false,
-  onButtonClick = () => {},
-  events = [],
   role,
   currentUserId,
+  events = [],
   availability = {},
+  onDayClick,
+  onAddClick = () => {},
+  onPendingDaySelect = () => {},
   isSelectionMode = false,
   selectedPendingDays = [],
-  onPendingDaySelect = () => {},
-  onDayClick = () => {},
   viewingDay = null,
   className = "",
 }) => {
@@ -61,6 +58,7 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
   const dayRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(today.getMonth());
+
   const monthOptions = monthNames.map((month, index) => ({
     name: month,
     value: `${index}`,
@@ -72,20 +70,21 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
     center = true,
     instant = false
   ) => {
-    const targetDayIndex = dayRefs.current.findIndex(
+    const targetElement = dayRefs.current.find(
       (ref) =>
         ref &&
         ref.getAttribute("data-month") === `${monthIndex}` &&
         ref.getAttribute("data-day") === `${dayIndex}`
     );
-    const targetElement = dayRefs.current[targetDayIndex];
 
-    if (targetDayIndex !== -1 && targetElement) {
+    const headerElement = document.querySelector("#calendar-header");
+
+    if (targetElement) {
       const container = document.querySelector(".calendar-container");
-      if (container) {
+      if (container && headerElement) {
         const containerRect = container.getBoundingClientRect();
         const elementRect = targetElement.getBoundingClientRect();
-
+        const headerHeight = (headerElement as HTMLElement).offsetHeight;
         let offset;
         if (center) {
           const is2xl = window.matchMedia("(min-width: 1536px)").matches;
@@ -96,9 +95,8 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
             containerRect.height / offsetFactor +
             elementRect.height / 2;
         } else {
-          offset = elementRect.top - containerRect.top;
+          offset = (elementRect.top - containerRect.top) - headerHeight - 16;
         }
-
         container.scrollTo({
           top: container.scrollTop + offset,
           behavior: instant ? "auto" : "smooth",
@@ -110,26 +108,15 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
   const handlePrevYear = () => setYear((prevYear) => prevYear - 1);
   const handleNextYear = () => setYear((prevYear) => prevYear + 1);
 
-  const handleMonthChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleMonthChange = (event: { target: { value: string } }) => {
     const monthIndex = parseInt(event.target.value, 10);
     setSelectedMonth(monthIndex);
-    scrollToDay(monthIndex, 1);
+    scrollToDay(monthIndex, 1, false, true); 
   };
 
   const handleTodayClick = () => {
     setYear(today.getFullYear());
     scrollToDay(today.getMonth(), today.getDate());
-  };
-
-  const handleDayClick = (day: number, month: number, year: number) => {
-    if (!onClick) {
-      return;
-    }
-    if (month < 0) {
-      onClick(day, 11, year - 1);
-    } else {
-      onClick(day, month, year);
-    }
   };
 
   const eventsByDate = useMemo(() => {
@@ -139,190 +126,56 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
       const key = `${eventDate.getFullYear()}-${String(
         eventDate.getMonth() + 1
       ).padStart(2, "0")}-${String(eventDate.getDate()).padStart(2, "0")}`;
-      if (!grouped[key]) {
-        grouped[key] = [];
-      }
+      if (!grouped[key]) grouped[key] = [];
       grouped[key].push(event);
     });
     return grouped;
   }, [events]);
 
-  const generateCalendar = useMemo(() => {
-    const calendarDays = (() => {
-      const days = [];
-      const startDayOfWeek = new Date(year, 0, 1).getDay();
-      for (let i = 0; i < startDayOfWeek; i++) {
-        const prevYear = new Date(year, 0, 0);
-        const day = prevYear.getDate() - startDayOfWeek + 1 + i;
-        days.push({ month: -1, day });
-      }
-      for (let month = 0; month < 12; month++) {
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        for (let day = 1; day <= daysInMonth; day++) {
-          days.push({ month, day });
-        }
-      }
-      const lastWeekDayCount = days.length % 7;
-      if (lastWeekDayCount > 0) {
-        const extraDaysNeeded = 7 - lastWeekDayCount;
-        for (let day = 1; day <= extraDaysNeeded; day++) {
-          days.push({ month: 12, day });
-        }
-      }
-      return days;
-    })();
-
-    const calendarWeeks = [];
-    for (let i = 0; i < calendarDays.length; i += 7) {
-      calendarWeeks.push(calendarDays.slice(i, i + 7));
+  const calendarContent = useMemo(() => {
+    const calendarDays = [];
+    const startDayOfWeek = new Date(year, 0, 1).getDay();
+    for (let i = 0; i < startDayOfWeek; i++) {
+      const prevYear = new Date(year, 0, 0);
+      const day = prevYear.getDate() - startDayOfWeek + 1 + i;
+      calendarDays.push({
+        date: new Date(year - 1, 11, day),
+        isCurrentMonth: false,
+      });
     }
 
-    return calendarWeeks.map((week, weekIndex) => (
-      <div className="flex w-full" key={`week-${weekIndex}`}>
-        {week.map(({ month, day }, dayIndex) => {
-          const index = weekIndex * 7 + dayIndex;
-          const currentDate = new Date(year, month, day);
-          currentDate.setHours(0, 0, 0, 0);
-
-          const isPast = currentDate < today;
-          const isWeekend =
-            currentDate.getDay() === 0 || currentDate.getDay() === 6;
-          const dateKey = `${year}-${String(month + 1).padStart(
-            2,
-            "0"
-          )}-${String(day).padStart(2, "0")}`;
-          const hasEvents = (eventsByDate[dateKey] || []).length > 0;
-          const isPermanentlyDisabled = (isPast || isWeekend) && !hasEvents;
-          const isAvailable =
-            availability[dateKey] && availability[dateKey].length > 0;
-          const isPending = selectedPendingDays.some(
-            (d) => d.getTime() === currentDate.getTime()
-          );
-
-          // NOVO: Verifica se o dia atual é o que está sendo visualizado na sidebar
-          const isViewing = viewingDay
-            ? viewingDay.getTime() === currentDate.getTime()
-            : false;
-
-          // NOVO: O dia deve ser destacado se estiver pendente OU sendo visualizado
-          const isHighlighted = isPending || isViewing;
-
-          const isToday = currentDate.getTime() === today.getTime();
-          const isNewMonth = day === 1;
-
-          const isClickable =
-            (!isSelectionMode && (isAvailable || hasEvents)) ||
-            (isSelectionMode && !isPast && !isWeekend && !isAvailable);
-
-          return (
-            <div
-              key={`${month}-${day}`}
-              ref={(el) => {
-                if (el) dayRefs.current[index] = el;
-              }}
-              data-month={month}
-              data-day={day}
-              onClick={() => {
-                if (!isClickable) return;
-
-                if (isSelectionMode) {
-                  onPendingDaySelect(currentDate);
-                } else {
-                  onDayClick(currentDate);
-                }
-              }}
-              className={`
-      relative group aspect-square -m-px w-full grow font-medium 
-      transition-all border-2
-      transition-colors
-      sm:size-16 lg:size-28 2xl:size-28
-
-
-      ${isHighlighted ? "border-blue-500 z-40" : "border-slate-200"}
-      ${isClickable ? "cursor-pointer hover:z-30" : ""}
-      
-      ${
-        isSelectionMode && isClickable
-          ? "hover:border-blue-400 hover:bg-blue-50"
-          : ""
+    for (let month = 0; month < 12; month++) {
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      for (let day = 1; day <= daysInMonth; day++) {
+        calendarDays.push({
+          date: new Date(year, month, day),
+          isCurrentMonth: true,
+        });
       }
-      
-      ${
-        isPending
-          ? "bg-blue-50 z-40"
-          : isPermanentlyDisabled
-          ? "bg-slate-50 pointer-events-none"
-          : hasEvents && isPast
-          ? "bg-slate-50"
-          : isAvailable
-          ? "bg-blue-50"
-          : "bg-white"
+    }
+
+    const lastWeekDayCount = calendarDays.length % 7;
+    if (lastWeekDayCount > 0) {
+      const extraDaysNeeded = 7 - lastWeekDayCount;
+      for (let day = 1; day <= extraDaysNeeded; day++) {
+        calendarDays.push({
+          date: new Date(year + 1, 0, day),
+          isCurrentMonth: false,
+        });
       }
-    `}
-            >
-              <span
-                className={`absolute left-1 top-1 flex size-5 items-center justify-center rounded-full text-xs sm:size-6 sm:text-sm lg:left-2 lg:top-2 lg:size-8 lg:text-base ${
-                  isToday ? "bg-blue-500 font-semibold text-white" : ""
-                } ${
-                  month < 0 || isPermanentlyDisabled
-                    ? "text-slate-400"
-                    : "text-slate-800"
-                }`}
-              >
-                {day}
-              </span>
+    }
 
-              {isNewMonth && month >= 0 && month < 12 && (
-                <span className="absolute bottom-0.5 left-0 w-full truncate px-1.5 text-sm font-semibold text-slate-300 sm:bottom-0 sm:text-lg lg:bottom-2.5 lg:left-3.5 lg:-mb-1 lg:w-fit lg:px-0 lg:text-xl 2xl:mb-[-4px] 2xl:text-2xl">
-                  {monthNames[month]}
-                </span>
-              )}
-
-              <div className="absolute inset-x-0 top-7 bottom-0 overflow-y-auto custom-scrollbar px-1 pt-1 sm:top-8 lg:top-12">
-                <div className="flex flex-col gap-1">
-                  {(eventsByDate[dateKey] || []).map((event) => {
-                    const personToShow =
-                      role === "aluno"
-                        ? getPsicologoData(event.psicologoId)
-                        : getPacienteData(event.pacienteId);
-                    return (
-                      <div
-                        key={event.id}
-                        className="flex items-center rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800 whitespace-nowrap"
-                      >
-                        <span className="font-semibold">
-                          {formatEventTime(event.horario)}
-                        </span>
-                        <span className="ml-1 truncate">
-                          {personToShow?.name || "..."}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    ));
-  }, [
-    year,
-    availability,
-    eventsByDate,
-    isSelectionMode,
-    selectedPendingDays,
-    role,
-    onClick,
-    onPendingDaySelect,
-    onDayClick,
-    viewingDay
-  ]);
+    let weeks = [];
+    for (let i = 0; i < calendarDays.length; i += 7) {
+      weeks.push(calendarDays.slice(i, i + 7));
+    }
+    return weeks;
+  }, [year]);
 
   useEffect(() => {
     scrollToDay(today.getMonth(), today.getDate(), true, true);
-    const calendarContainer = document.querySelector(".calendar-container");
 
+    const calendarContainer = document.querySelector(".calendar-container");
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -331,36 +184,31 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
               entry.target.getAttribute("data-month")!,
               10
             );
-            if (!isNaN(month) && month >= 0 && month < 12) {
+            if (!isNaN(month) && month >= 0 && month < 12)
               setSelectedMonth(month);
-            }
           }
         });
       },
-      {
-        root: calendarContainer,
-        rootMargin: "-75% 0px -25% 0px",
-        threshold: 0,
-      }
+      { root: calendarContainer, rootMargin: "-75% 0px -25% 0px", threshold: 0 }
     );
 
     dayRefs.current.forEach((ref) => {
-      if (ref && ref.getAttribute("data-day") === "15") {
-        observer.observe(ref);
-      }
+      if (ref && ref.getAttribute("data-day") === "15") observer.observe(ref);
     });
-
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, []);
+
+  function formatDateKey(currentDate: Date) {
+    return `${currentDate.getFullYear()}-${String(
+      currentDate.getMonth() + 1
+    ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
+  }
 
   return (
     <div
-      className={`no-scrollbar calendar-container h-full overflow-y-auto bg-white 
-      pb-10 text-slate-800 shadow-interface rounded-tl-2xl ${className}`}
+      className={`no-scrollbar calendar-container h-full overflow-y-auto bg-white pb-10 text-slate-800 shadow-interface rounded-tl-2xl ${className}`}
     >
-      <div className="sticky -top-px z-50 w-full bg-white px-5 pt-7 sm:px-8 sm:pt-8">
+      <div id="calendar-header" className="sticky -top-px z-50 w-full bg-white px-5 pt-7 sm:px-8 sm:pt-8">
         <div className="mb-4 flex w-full flex-wrap items-center justify-between gap-6">
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <Select
@@ -428,9 +276,9 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
           </div>
         </div>
         <div className="grid w-full grid-cols-7 justify-between text-slate-500">
-          {daysOfWeek.map((day, index) => (
+          {daysOfWeek.map((day) => (
             <div
-              key={index}
+              key={day}
               className="w-full border-b border-slate-200 py-2 text-center font-semibold"
             >
               {day}
@@ -438,7 +286,152 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
           ))}
         </div>
       </div>
-      <div className="w-full px-5 pt-4 sm:px-8 sm:pt-6">{generateCalendar}</div>
+      <div className="w-full px-5 pt-4 sm:px-8 sm:pt-6">
+        {calendarContent.map((week, weekIndex) => (
+          <div className="flex w-full" key={weekIndex}>
+            {week.map(({ date: currentDate, isCurrentMonth }) => {
+              const day = currentDate.getDate();
+              const month = currentDate.getMonth();
+
+              const isPast = currentDate < today;
+              const isWeekend =
+                currentDate.getDay() === 0 || currentDate.getDay() === 6;
+              const dateKey = formatDateKey(currentDate);
+              const hasEvents = (eventsByDate[dateKey] || []).length > 0;
+              const isAvailable =
+                availability[dateKey] && availability[dateKey].length > 0;
+              let isClickable = false;
+              let dayBgColor = "bg-white";
+
+              if (role === "aluno") {
+                isClickable = isAvailable && !isPast;
+                if (isAvailable && !isPast) dayBgColor = "bg-blue-50";
+                else if (!isCurrentMonth || isPast || isWeekend)
+                  dayBgColor = "bg-slate-50";
+              } else {
+                const isPermanentlyDisabled =
+                  (isPast || isWeekend) && !hasEvents;
+                isClickable =
+                  (!isSelectionMode && (isAvailable || hasEvents)) ||
+                  (isSelectionMode && !isPast && !isWeekend && !isAvailable);
+                const isPending = selectedPendingDays.some(
+                  (d) => d.getTime() === currentDate.getTime()
+                );
+                if (isPending) dayBgColor = "bg-blue-50 z-40";
+                else if (isPermanentlyDisabled)
+                  dayBgColor = "bg-slate-50 pointer-events-none";
+                else if (hasEvents && isPast) dayBgColor = "bg-slate-50";
+                else if (isAvailable) dayBgColor = "bg-blue-50";
+              }
+
+              const isPending =
+                role === "psicologo" &&
+                selectedPendingDays.some(
+                  (d) => d.getTime() === currentDate.getTime()
+                );
+              const isViewing =
+                role === "psicologo" && viewingDay
+                  ? viewingDay.getTime() === currentDate.getTime()
+                  : false;
+              const isHighlighted = isPending || isViewing;
+              const isTodayDate = currentDate.getTime() === today.getTime();
+              const isNewMonth = day === 1 && isCurrentMonth;
+
+              return (
+                <div
+                  key={dateKey}
+                  ref={(el) => {
+                    if (el) dayRefs.current.push(el);
+                  }}
+                  data-month={month}
+                  data-day={day}
+                  onClick={() => {
+                    if (isClickable) {
+                      if (role === "psicologo" && isSelectionMode) {
+                        onPendingDaySelect(currentDate);
+                      } else {
+                        onDayClick(currentDate);
+                      }
+                    }
+                  }}
+                  className={`relative group aspect-square -m-px w-full grow font-medium transition-all border-2 transition-colors sm:size-16 lg:size-28 2xl:size-28 ${
+                    isHighlighted ? "border-blue-500 z-40" : "border-slate-200"
+                  } ${isClickable ? "cursor-pointer" : ""} ${
+                    role === "psicologo" && isSelectionMode && isClickable
+                      ? "hover:border-blue-400 hover:bg-blue-50 hover:z-40"
+                      : ""
+                  } ${dayBgColor}`}
+                >
+                  <span
+                    className={`absolute left-1 top-1 flex size-5 items-center justify-center rounded-full text-xs sm:size-6 sm:text-sm lg:left-2 lg:top-2 lg:size-8 lg:text-base ${
+                      isTodayDate ? "bg-blue-500 font-semibold text-white" : ""
+                    } ${
+                      !isCurrentMonth ||
+                      (role === "psicologo" &&
+                        (isPast || isWeekend) &&
+                        !hasEvents)
+                        ? "text-slate-400"
+                        : "text-slate-800"
+                    }`}
+                  >
+                    {day}
+                  </span>
+                  {isNewMonth && (
+                    <span className="absolute bottom-0.5 left-0 w-full truncate px-1.5 text-sm font-semibold text-slate-300 sm:bottom-0 sm:text-lg lg:bottom-2.5 lg:left-3.5 lg:-mb-1 lg:w-fit lg:px-0 lg:text-xl 2xl:mb-[-4px] 2xl:text-2xl">
+                      {monthNames[month]}
+                    </span>
+                  )}
+                  <div className="absolute inset-x-0 top-7 bottom-0 overflow-y-auto custom-scrollbar px-1 pt-1 sm:top-8 lg:top-12">
+                    <div className="flex flex-col gap-1">
+                      {(eventsByDate[dateKey] || []).map((event) => {
+                        const personToShow =
+                          role === "aluno"
+                            ? getPsicologoData(event.psicologoId)
+                            : getPacienteData(event.pacienteId);
+                        return (
+                          <div
+                            key={event.id}
+                            className="flex items-center rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800 whitespace-nowrap"
+                          >
+                            <span className="font-semibold">
+                              {formatEventTime(event.horario)}
+                            </span>
+                            <span className="ml-1 truncate">
+                              {personToShow?.name || "..."}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {role === "aluno" && isClickable && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAddClick(currentDate);
+                      }}
+                      type="button"
+                      className="absolute right-2 top-2 rounded-full opacity-0 transition-opacity focus:opacity-100 group-hover:opacity-100"
+                    >
+                      <svg
+                        className="size-8 scale-90 text-blue-500 transition-transform hover:scale-100"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4.243a1 1 0 1 0-2 0V11H7.757a1 1 0 1 0 0 2H11v3.243a1 1 0 1 0 2 0V13h3.243a1 1 0 1 0 0-2H13V7.757Z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -448,18 +441,11 @@ export interface SelectProps {
   value: string;
   label?: string;
   options: { name: string; value: string }[];
-  onChange: (_event: React.ChangeEvent<HTMLSelectElement>) => void;
+  onChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   className?: string;
 }
 
-export const Select = ({
-  name,
-  value,
-  label,
-  options = [],
-  onChange,
-  className,
-}: SelectProps) => (
+export const Select = ({ name, value, label, options = [], onChange, className }: SelectProps) => (
   <div className={`relative ${className}`}>
     {label && (
       <label htmlFor={name} className="mb-2 block font-medium text-slate-800">
@@ -486,7 +472,7 @@ export const Select = ({
         </option>
       ))}
     </select>
-
+    
     <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 sm:pr-4">
       <svg
         className="size-5 text-slate-500"
