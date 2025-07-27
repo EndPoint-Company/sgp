@@ -8,6 +8,7 @@ interface Event {
   id: string;
   title: string;
   start: string;
+  status: 'aguardando aprovacao' | 'confirmada' | 'cancelada' | 'passada';
 }
 
 interface DayDetailPanelProps {
@@ -15,8 +16,8 @@ interface DayDetailPanelProps {
   availabilityForDay: string[];
   eventsForDay: Event[];
   onClose: () => void;
-  onEdit: () => void;
-  onBlockDay: (day: Date) => void;
+  onEdit?: () => void;
+  onBlockDay?: (day: Date) => void;
 }
 
 export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
@@ -41,9 +42,29 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
   }).format(day);
   
   const handleConfirmBlock = () => {
-    onBlockDay(day);
+    // Só chama onBlockDay se ela existir
+    if (onBlockDay) {
+      onBlockDay(day);
+    }
     setConfirmModalOpen(false);
   };
+
+  const getStatusChip = (status: Event['status']) => {
+    const styles = {
+      confirmada: 'bg-green-100 text-green-800',
+      'aguardando aprovacao': 'bg-yellow-100 text-yellow-800',
+      cancelada: 'bg-red-100 text-red-800',
+      passada: 'bg-gray-100 text-gray-800'
+    };
+    const text = {
+      confirmada: 'Confirmada',
+      'aguardando aprovacao': 'Pendente',
+      cancelada: 'Cancelada',
+      passada: 'Realizada'
+    }
+    return <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[status]}`}>{text[status]}</span>;
+  }
+
 
   return (
     <>
@@ -57,7 +78,7 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
 
         <p className="text-md text-gray-600 mb-6 capitalize">{formattedDate}</p>
 
-        <div className="flex-grow overflow-y-auto">
+               <div className="flex-grow overflow-y-auto">
           <div className="mb-6">
             <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
               <CalendarIcon size={16} className="mr-2"/>Consultas Agendadas
@@ -66,7 +87,10 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
               <ul className="space-y-2">
                 {eventsForDay.map(event => (
                   <li key={event.id} className="bg-blue-50 p-3 rounded-md text-sm">
-                    <p className="font-medium text-blue-800">{new Date(event.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                    <div className="flex justify-between items-center mb-1">
+                      <p className="font-medium text-blue-800">{new Date(event.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                      {getStatusChip(event.status)}
+                    </div>
                     <p className="text-blue-700">{event.title}</p>
                   </li>
                 ))}
@@ -97,8 +121,8 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
             )}
           </div>
         </div>
-
-        {!isPastDay && (
+        
+        {!isPastDay && onEdit && onBlockDay && (
           <div className="mt-auto pt-4 border-t border-gray-200 flex flex-col gap-3">
             <button 
               onClick={onEdit}
@@ -119,13 +143,15 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
         )}
       </div>
 
-      <ConfirmationModal
-        isOpen={isConfirmModalOpen}
-        title="Confirmar Bloqueio"
-        description="Tem certeza que deseja bloquear este dia? Todos os horários disponíveis serão removidos."
-        onConfirm={handleConfirmBlock}
-        onCancel={() => setConfirmModalOpen(false)}
-      />
+      {onBlockDay && (
+        <ConfirmationModal
+          isOpen={isConfirmModalOpen}
+          title="Confirmar Bloqueio"
+          description="Tem certeza que deseja bloquear este dia? Todos os horários disponíveis serão removidos."
+          onConfirm={handleConfirmBlock}
+          onCancel={() => setConfirmModalOpen(false)}
+        />
+      )}
     </>
   );
 };

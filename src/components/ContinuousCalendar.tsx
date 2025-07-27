@@ -30,7 +30,6 @@ interface ContinuousCalendarProps {
   events?: Consulta[];
   availability?: Record<string, string[]>;
   onDayClick: (date: Date) => void;
-
   onAddClick?: (date: Date) => void;
   onPendingDaySelect?: (date: Date) => void;
   isSelectionMode?: boolean;
@@ -95,7 +94,7 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
             containerRect.height / offsetFactor +
             elementRect.height / 2;
         } else {
-          offset = (elementRect.top - containerRect.top) - headerHeight - 16;
+          offset = elementRect.top - containerRect.top - headerHeight - 16;
         }
         container.scrollTo({
           top: container.scrollTop + offset,
@@ -111,7 +110,7 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
   const handleMonthChange = (event: { target: { value: string } }) => {
     const monthIndex = parseInt(event.target.value, 10);
     setSelectedMonth(monthIndex);
-    scrollToDay(monthIndex, 1, false, true); 
+    scrollToDay(monthIndex, 1, false, true);
   };
 
   const handleTodayClick = () => {
@@ -208,7 +207,10 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
     <div
       className={`no-scrollbar calendar-container h-full overflow-y-auto bg-white pb-10 text-slate-800 shadow-interface rounded-tl-2xl ${className}`}
     >
-      <div id="calendar-header" className="sticky -top-px z-50 w-full bg-white px-5 pt-7 sm:px-8 sm:pt-8">
+      <div
+        id="calendar-header"
+        className="sticky -top-px z-50 w-full bg-white px-5 pt-7 sm:px-8 sm:pt-8"
+      >
         <div className="mb-4 flex w-full flex-wrap items-center justify-between gap-6">
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <Select
@@ -300,42 +302,46 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
               const hasEvents = (eventsByDate[dateKey] || []).length > 0;
               const isAvailable =
                 availability[dateKey] && availability[dateKey].length > 0;
-              let isClickable = false;
-              let dayBgColor = "bg-white";
 
-              if (role === "aluno") {
-                isClickable = isAvailable && !isPast;
-                if (isAvailable && !isPast) dayBgColor = "bg-blue-50";
-                else if (!isCurrentMonth || isPast || isWeekend)
-                  dayBgColor = "bg-slate-50";
-              } else {
-                const isPermanentlyDisabled =
-                  (isPast || isWeekend) && !hasEvents;
-                isClickable =
-                  (!isSelectionMode && (isAvailable || hasEvents)) ||
-                  (isSelectionMode && !isPast && !isWeekend && !isAvailable);
-                const isPending = selectedPendingDays.some(
-                  (d) => d.getTime() === currentDate.getTime()
-                );
-                if (isPending) dayBgColor = "bg-blue-50 z-40";
-                else if (isPermanentlyDisabled)
-                  dayBgColor = "bg-slate-50 pointer-events-none";
-                else if (hasEvents && isPast) dayBgColor = "bg-slate-50";
-                else if (isAvailable) dayBgColor = "bg-blue-50";
-              }
+              let isClickable = false;
+              let dayBgColor = "bg-slate-100";
+              let textColorClass = "text-slate-800";
 
               const isPending =
                 role === "psicologo" &&
                 selectedPendingDays.some(
                   (d) => d.getTime() === currentDate.getTime()
                 );
-              const isViewing =
-                role === "psicologo" && viewingDay
-                  ? viewingDay.getTime() === currentDate.getTime()
-                  : false;
+
+              const isViewing = viewingDay
+                ? viewingDay.getTime() === currentDate.getTime()
+                : false;
               const isHighlighted = isPending || isViewing;
+
               const isTodayDate = currentDate.getTime() === today.getTime();
               const isNewMonth = day === 1 && isCurrentMonth;
+
+              if (isPending) {
+                dayBgColor = "bg-blue-50 z-50";
+              } else if (!isCurrentMonth || isPast || isWeekend) {
+                dayBgColor = "bg-slate-100";
+                textColorClass = "text-slate-400";
+              } else if (isAvailable) {
+                dayBgColor = "bg-white";
+              } else {
+                dayBgColor = "bg-slate-50";
+              }
+
+              if (role === "aluno") {
+                isClickable = (isAvailable && !isPast) || hasEvents;
+              } else {
+                const isPermanentlyDisabled =
+                  (isPast || isWeekend) && !hasEvents;
+                isClickable =
+                  (!isSelectionMode && (isAvailable || hasEvents)) ||
+                  (isSelectionMode && !isPast && !isWeekend && !isAvailable);
+                if (isPermanentlyDisabled) dayBgColor += " pointer-events-none";
+              }
 
               return (
                 <div
@@ -365,14 +371,7 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
                   <span
                     className={`absolute left-1 top-1 flex size-5 items-center justify-center rounded-full text-xs sm:size-6 sm:text-sm lg:left-2 lg:top-2 lg:size-8 lg:text-base ${
                       isTodayDate ? "bg-blue-500 font-semibold text-white" : ""
-                    } ${
-                      !isCurrentMonth ||
-                      (role === "psicologo" &&
-                        (isPast || isWeekend) &&
-                        !hasEvents)
-                        ? "text-slate-400"
-                        : "text-slate-800"
-                    }`}
+                    } ${textColorClass}`}
                   >
                     {day}
                   </span>
@@ -388,10 +387,29 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
                           role === "aluno"
                             ? getPsicologoData(event.psicologoId)
                             : getPacienteData(event.pacienteId);
+
+                        let pillColorClasses = "";
+                        switch (event.status) {
+                          case "confirmada":
+                            pillColorClasses = "bg-blue-100 text-blue-800";
+                            break;
+                          case "aguardando aprovacao":
+                            pillColorClasses = "bg-yellow-100 text-yellow-800";
+                            break;
+                          case "cancelada":
+                            pillColorClasses = "bg-red-100 text-red-800";
+                            break;
+                          case "passada":
+                            pillColorClasses = "bg-gray-200 text-gray-700";
+                            break;
+                          default:
+                            pillColorClasses = "bg-gray-100 text-gray-800";
+                        }
+
                         return (
                           <div
                             key={event.id}
-                            className="flex items-center rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800 whitespace-nowrap"
+                            className={`flex items-center rounded px-1.5 py-0.5 text-xs whitespace-nowrap ${pillColorClasses}`}
                           >
                             <span className="font-semibold">
                               {formatEventTime(event.horario)}
@@ -404,7 +422,7 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
                       })}
                     </div>
                   </div>
-                  {role === "aluno" && isClickable && (
+                  {role === "aluno" && isClickable && !isPast && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -445,7 +463,14 @@ export interface SelectProps {
   className?: string;
 }
 
-export const Select = ({ name, value, label, options = [], onChange, className }: SelectProps) => (
+export const Select = ({
+  name,
+  value,
+  label,
+  options = [],
+  onChange,
+  className,
+}: SelectProps) => (
   <div className={`relative ${className}`}>
     {label && (
       <label htmlFor={name} className="mb-2 block font-medium text-slate-800">
@@ -472,7 +497,7 @@ export const Select = ({ name, value, label, options = [], onChange, className }
         </option>
       ))}
     </select>
-    
+
     <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 sm:pr-4">
       <svg
         className="size-5 text-slate-500"

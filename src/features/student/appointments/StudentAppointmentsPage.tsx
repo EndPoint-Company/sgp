@@ -3,7 +3,7 @@ import AppointmentCard from "../../components/AppointmentCard";
 import { Input } from "../../../components/ui/input";
 import { Button } from "../../../components/ui/button";
 import { Modal } from "../../../components/ui/Modal";
-import { AppointmentRequestFlow } from "../home/components/AppointmentRequestFlow";
+import { AppointmentRequestFlow } from "../components/AppointmentRequestFlow";
 import {
   LayoutGrid,
   List,
@@ -18,23 +18,30 @@ import {
   mockFirebaseData,
   getPsicologoData,
   formatAppointmentDate,
-} from "../../psychologist/data/mockApi"; 
-import type { Consulta } from "../../psychologist/services/apiService"; 
+} from "../../psychologist/data/mockApi";
+import type { Consulta } from "../../psychologist/services/apiService";
 
-const ID_ALUNO_LOGADO = "mu3Mo6I0eSSD3aWZdYte"; 
+const ID_ALUNO_LOGADO = "mu3Mo6I0eSSD3aWZdYte";
 
 export default function StudentAppointmentsPage() {
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<"agendados" | "solicitacoes" | "cancelados" | "passados">("agendados");
+  const [activeTab, setActiveTab] = useState<
+    "agendados" | "solicitacoes" | "cancelados" | "passados"
+  >("agendados");
   const [consultas, setConsultas] = useState<Consulta[]>(mockFirebaseData);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleCancelAppointment = (consultaId: string) => {
-    setConsultas((prev) => prev.map((c) => (c.id === consultaId ? { ...c, status: "cancelada" } : c)));
-  
+    setConsultas((prev) =>
+      prev.map((c) => (c.id === consultaId ? { ...c, status: "cancelada" } : c))
+    );
   };
 
-  const handleCreateRequest = (data: { date: Date; time: string; description: string; }) => {
+  const handleCreateRequest = (data: {
+    date: Date;
+    time: string;
+    description: string;
+  }) => {
     const [hours, minutes] = data.time.split(":");
     const newDate = new Date(data.date);
     newDate.setHours(parseInt(hours), parseInt(minutes));
@@ -49,23 +56,28 @@ export default function StudentAppointmentsPage() {
   };
 
   const listsByStatus = useMemo(() => {
-    const studentConsultas = consultas.filter((c) => c.pacienteId === ID_ALUNO_LOGADO);
+    const studentConsultas = consultas.filter(
+      (c) => c.pacienteId === ID_ALUNO_LOGADO
+    );
     const processed = studentConsultas.map((item) => {
       const psicologo = getPsicologoData(item.psicologoId);
       const schedule = formatAppointmentDate(item.horario);
-      const displayStatus = 
-        item.status === 'aguardando aprovacao' ? 'Pendente' :
-        item.status.charAt(0).toUpperCase() + item.status.slice(1);
+      const displayStatus =
+        item.status === "aguardando aprovacao"
+          ? "Pendente"
+          : item.status.charAt(0).toUpperCase() + item.status.slice(1);
 
       return { ...item, ...psicologo, ...schedule, status: displayStatus };
     });
-    
+
     const now = new Date();
     return {
-      agendados: processed.filter((item) => item.status === 'Confirmada'),
-      solicitacoes: processed.filter((item) => item.status === 'Pendente'),
-      cancelados: processed.filter((item) => item.status === 'Cancelada'),
-      passados: processed.filter((item) => new Date(item.horario) < now && item.status === 'Passada'),
+      agendados: processed.filter((item) => item.status === "Confirmada"),
+      solicitacoes: processed.filter((item) => item.status === "Pendente"),
+      cancelados: processed.filter((item) => item.status === "Cancelada"),
+      passados: processed.filter(
+        (item) => new Date(item.horario) < now && item.status === "Passada"
+      ),
     };
   }, [consultas]);
 
@@ -96,16 +108,44 @@ export default function StudentAppointmentsPage() {
         </div>
 
         <div className="flex items-center gap-6 border-b border-gray-200 mb-6 text-sm">
-          <button onClick={() => setActiveTab("agendados")} className={`flex items-center gap-1.5 pb-3 ${activeTab === "agendados" ? "text-blue-600 font-semibold border-b-2 border-blue-600" : "text-gray-500"}`}>
+          <button
+            onClick={() => setActiveTab("agendados")}
+            className={`flex items-center gap-1.5 pb-3 ${
+              activeTab === "agendados"
+                ? "text-blue-600 font-semibold border-b-2 border-blue-600"
+                : "text-gray-500"
+            }`}
+          >
             <Check className="w-4 h-4" /> Agendados
           </button>
-          <button onClick={() => setActiveTab("solicitacoes")} className={`flex items-center gap-1.5 pb-3 ${activeTab === "solicitacoes" ? "text-blue-600 font-semibold border-b-2 border-blue-600" : "text-gray-500"}`}>
+          <button
+            onClick={() => setActiveTab("solicitacoes")}
+            className={`flex items-center gap-1.5 pb-3 ${
+              activeTab === "solicitacoes"
+                ? "text-blue-600 font-semibold border-b-2 border-blue-600"
+                : "text-gray-500"
+            }`}
+          >
             <RefreshCw className="w-4 h-4" /> Solicitações
           </button>
-          <button onClick={() => setActiveTab("cancelados")} className={`flex items-center gap-1.5 pb-3 ${activeTab === "cancelados" ? "text-blue-600 font-semibold border-b-2 border-blue-600" : "text-gray-500"}`}>
+          <button
+            onClick={() => setActiveTab("cancelados")}
+            className={`flex items-center gap-1.5 pb-3 ${
+              activeTab === "cancelados"
+                ? "text-blue-600 font-semibold border-b-2 border-blue-600"
+                : "text-gray-500"
+            }`}
+          >
             <X className="w-4 h-4" /> Cancelados
           </button>
-          <button onClick={() => setActiveTab("passados")} className={`flex items-center gap-1.5 pb-3 ${activeTab === "passados" ? "text-blue-600 font-semibold border-b-2 border-blue-600" : "text-gray-500"}`}>
+          <button
+            onClick={() => setActiveTab("passados")}
+            className={`flex items-center gap-1.5 pb-3 ${
+              activeTab === "passados"
+                ? "text-blue-600 font-semibold border-b-2 border-blue-600"
+                : "text-gray-500"
+            }`}
+          >
             <CalendarDays className="w-4 h-4" /> Passados
           </button>
         </div>
@@ -119,7 +159,9 @@ export default function StudentAppointmentsPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="text-sm px-3 text-gray-500">Recentes</Button>
+            <Button variant="outline" className="text-sm px-3 text-gray-500">
+              Recentes
+            </Button>
             <Button variant="outline" className="text-sm px-3">
               <Plus className="w-4 h-4 text-gray-400 mr-1" />
               <span className="text-gray-500">Próximos</span>
@@ -144,12 +186,18 @@ export default function StudentAppointmentsPage() {
                 time={item.time}
                 status={item.status}
                 avatarUrl={item.avatarUrl}
-                onCancel={item.status === 'Confirmada' ? () => handleCancelAppointment(item.id) : undefined}
+                onCancel={
+                  item.status === "Confirmada"
+                    ? () => handleCancelAppointment(item.id)
+                    : undefined
+                }
               />
             ))
           ) : (
             <div className="col-span-full text-center">
-              <p className="text-gray-500">Nenhum atendimento encontrado nesta categoria.</p>
+              <p className="text-gray-500">
+                Nenhum atendimento encontrado nesta categoria.
+              </p>
             </div>
           )}
         </div>

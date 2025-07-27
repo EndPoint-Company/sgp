@@ -187,7 +187,8 @@ const handleCloseTimePanel = () => {
           return {
               id: consulta.id,
               start: consulta.horario, 
-              title: `Consulta com ${paciente?.name || 'Paciente'}` 
+              title: `Consulta com ${paciente?.name || 'Paciente'}`,
+              status: consulta.status as 'aguardando aprovacao' | 'confirmada' | 'cancelada' | 'passada'
           };
         })
     : [];
@@ -201,23 +202,18 @@ const handleCloseTimePanel = () => {
 
         <div className="flex-1 min-h-0">
           <ContinuousCalendar
-            // Essencial para definir o comportamento e visual
             role="psicologo"
 
-            // Props de dados
             events={userEvents}
             availability={availability}
 
-            // Props de estado para o modo de seleção do psicólogo
             isSelectionMode={isSelectionMode}
             selectedPendingDays={pendingSelectedDays}
             viewingDay={selectedDayForDetail}
 
-            // Props de ações (handlers)
             onDayClick={handleDayClick}
             onPendingDaySelect={handlePendingDaySelect}
 
-            // Prop para o visual conectado à sidebar
             className={isSidebarOpen ? "rounded-tr-none" : "rounded-tr-2xl"} currentUserId={""}          />
         </div>
 

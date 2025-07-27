@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import AppointmentCard from "../../components/AppointmentCard";
 import {
   mockFirebaseData,
@@ -8,13 +8,23 @@ import {
 import type { Consulta } from "../../psychologist/services/apiService";
 import { Plus, CalendarPlus } from "lucide-react";
 import { Modal } from "../../../components/ui/Modal";
-import { AppointmentRequestFlow } from "./components/AppointmentRequestFlow";
+import { AppointmentRequestFlow } from "../components/AppointmentRequestFlow";
 
 const ID_ALUNO_LOGADO = "mu3Mo6I0eSSD3aWZdYte";
 
 export default function StudentHomePage() {
   const [consultas, setConsultas] = useState<Consulta[]>(mockFirebaseData);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [availability, setAvailability] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    setAvailability({
+      "2025-07-28": ["09:00", "10:00", "14:00"],
+      "2025-07-30": ["11:00"],
+      "2025-08-05": ["08:00", "09:00"],
+    });
+  }, []);
 
   const handleCancelAppointment = (consultaId: string) => {
     setConsultas((prevConsultas) =>
@@ -79,12 +89,11 @@ export default function StudentHomePage() {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <AppointmentRequestFlow
           onClose={() => setIsModalOpen(false)}
-          onConfirm={handleCreateRequest}
-        />
+          onConfirm={handleCreateRequest}   
+          availability={availability}     />
       </Modal>
 
       <div>
-
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold">Próximos Atendimentos</h2>
           <button

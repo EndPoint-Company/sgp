@@ -1,44 +1,48 @@
-import React, { useState } from "react";
+'use client';
+
+import React, { useState, useEffect } from "react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { ptBR } from "date-fns/locale";
 import { X, CalendarPlus, CheckCircle } from "lucide-react";
 
-const getAvailableTimes = (date: Date): string[] => {
-  return [
-    "08:00",
-    "09:00",
-    "10:00",
-    "11:00",
-    "13:30",
-    "14:30",
-    "15:30",
-    "16:30",
-  ];
-};
+const formatDateKey = (date: Date) => date.toISOString().split("T")[0];
 
 type AppointmentRequestFlowProps = {
   onClose: () => void;
   onConfirm: (data: { date: Date; time: string; description: string }) => void;
+  initialDate?: Date | null;
+  availability: Record<string, string[]>;
 };
 
 export function AppointmentRequestFlow({
   onClose,
   onConfirm,
+  initialDate, 
+  availability,
 }: AppointmentRequestFlowProps) {
-  const [step, setStep] = useState<"selection" | "description" | "success">(
-    "selection"
-  );
+  const [step, setStep] = useState<"selection" | "description" | "success">("selection");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [description, setDescription] = useState("");
 
-  const handleDaySelect = (date: Date | undefined) => {
+const [month, setMonth] = useState<Date>(initialDate || new Date());
+
+  useEffect(() => {
+    if (initialDate) {
+      handleDaySelect(initialDate);
+    }
+  }, [initialDate]);
+
+const handleDaySelect = (date: Date | undefined) => {
     if (!date) return;
     setSelectedDate(date);
+    setMonth(date);
     setSelectedTime(null);
-    setAvailableTimes(getAvailableTimes(date));
+    const dayKey = formatDateKey(date);
+    const timesForDay = availability[dayKey] || [];
+    setAvailableTimes(timesForDay);
   };
 
   const handleSubmit = () => {
@@ -48,8 +52,8 @@ export function AppointmentRequestFlow({
         time: selectedTime,
         description: description,
       });
+      setStep("success");
     }
-    setStep("success");
   };
 
   const dayPickerStyles = `
@@ -86,15 +90,21 @@ export function AppointmentRequestFlow({
           <div className="flex flex-col sm:flex-row sm:gap-8">
             <div className="flex items-start justify-center h-[360px]">
               <DayPicker
-                mode="single"
-                selected={selectedDate}
-                onSelect={handleDaySelect}
-                locale={ptBR}
-                disabled={[
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleDaySelect}
+                month={month}
+                onMonthChange={setMonth}
+                locale={ptBR}
+                disabled={[
                   { before: new Date() },
-                  (date: Date) => date.getDay() === 0 || date.getDay() === 6,
+                  (date) => date.getDay() === 0 || date.getDay() === 6,
+                  (date) => {
+                    const dayKey = formatDateKey(date);
+                    return !availability[dayKey] || availability[dayKey].length === 0;
+                  }
                 ]}
-              />
+              />
             </div>
             <div className="w-full sm:w-48 flex flex-col h-[360px] mt-4 sm:mt-0 sm:border-l border-gray-300 sm:pl-8">
               <h3 className="font-semibold text-gray-700 mb-4 flex-shrink-0">
