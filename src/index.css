@@ -28,6 +28,53 @@ body {
   font-family: 'Switzer', sans-serif;
 }
 @theme {
-  --color-cz01: #E2E1E7; /* cor cinza claro (cz01) */
+  --color-cz01: #E2E1E7; 
 }
 
+.calendar-wrapper select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.calendar-wrapper *:focus:not(ol) {
+  outline: none;
+  --tw-ring-color: #3b82f6;
+  box-shadow: 0 0 0 2px var(--tw-ring-color);
+  border-color: #3b82f6;
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .shadow-interface {
+    box-shadow: 5px 0px 15px -3px rgb(0 0 0 / 0.07), 4px 0px 6px -4px rgb(0 0 0 / 0.05);
+  }
+}
+
+@keyframes slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out forwards;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out forwards;
+}

@@ -5,6 +5,7 @@ import type { Consulta } from "../features/psychologist/services/apiService";
 import {
   getPacienteData,
   getPsicologoData,
+  formatEventTime,
 } from "../features/psychologist/data/mockApi";
 
 const daysOfWeek = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -34,6 +35,9 @@ interface ContinuousCalendarProps {
   isSelectionMode?: boolean;
   selectedPendingDays?: Date[];
   onPendingDaySelect?: (date: Date) => void;
+  onDayClick?: (date: Date) => void;
+  viewingDay?: Date | null;
+  className?: string;
 }
 
 export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
@@ -47,8 +51,13 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
   isSelectionMode = false,
   selectedPendingDays = [],
   onPendingDaySelect = () => {},
+  onDayClick = () => {},
+  viewingDay = null,
+  className = "",
 }) => {
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const dayRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(today.getMonth());
@@ -57,7 +66,12 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
     value: `${index}`,
   }));
 
-  const scrollToDay = (monthIndex: number, dayIndex: number, center = true) => {
+  const scrollToDay = (
+    monthIndex: number,
+    dayIndex: number,
+    center = true,
+    instant = false
+  ) => {
     const targetDayIndex = dayRefs.current.findIndex(
       (ref) =>
         ref &&
@@ -87,7 +101,7 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
 
         container.scrollTo({
           top: container.scrollTop + offset,
-          behavior: "smooth",
+          behavior: instant ? "auto" : "smooth",
         });
       }
     }
@@ -134,38 +148,29 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
   }, [events]);
 
   const generateCalendar = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const daysInYear = (): { month: number; day: number }[] => {
-      const daysInYear = [];
+    const calendarDays = (() => {
+      const days = [];
       const startDayOfWeek = new Date(year, 0, 1).getDay();
-
       for (let i = 0; i < startDayOfWeek; i++) {
         const prevYear = new Date(year, 0, 0);
         const day = prevYear.getDate() - startDayOfWeek + 1 + i;
-        daysInYear.push({ month: -1, day: day });
+        days.push({ month: -1, day });
       }
-
       for (let month = 0; month < 12; month++) {
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         for (let day = 1; day <= daysInMonth; day++) {
-          daysInYear.push({ month, day });
+          days.push({ month, day });
         }
       }
-
-      const lastWeekDayCount = daysInYear.length % 7;
+      const lastWeekDayCount = days.length % 7;
       if (lastWeekDayCount > 0) {
         const extraDaysNeeded = 7 - lastWeekDayCount;
         for (let day = 1; day <= extraDaysNeeded; day++) {
-          daysInYear.push({ month: 12, day });
+          days.push({ month: 12, day });
         }
       }
-
-      return daysInYear;
-    };
-
-    const calendarDays = daysInYear();
+      return days;
+    })();
 
     const calendarWeeks = [];
     for (let i = 0; i < calendarDays.length; i += 7) {
@@ -176,72 +181,84 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
       <div className="flex w-full" key={`week-${weekIndex}`}>
         {week.map(({ month, day }, dayIndex) => {
           const index = weekIndex * 7 + dayIndex;
-          const isNewMonth =
-            index === 0 || calendarDays[index - 1].month !== month;
           const currentDate = new Date(year, month, day);
           currentDate.setHours(0, 0, 0, 0);
 
           const isPast = currentDate < today;
-          const dayOfWeek = currentDate.getDay();
-          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-          const isPermanentlyDisabled = isPast || isWeekend;
-
+          const isWeekend =
+            currentDate.getDay() === 0 || currentDate.getDay() === 6;
           const dateKey = `${year}-${String(month + 1).padStart(
             2,
             "0"
           )}-${String(day).padStart(2, "0")}`;
+          const hasEvents = (eventsByDate[dateKey] || []).length > 0;
+          const isPermanentlyDisabled = (isPast || isWeekend) && !hasEvents;
           const isAvailable =
             availability[dateKey] && availability[dateKey].length > 0;
-
           const isPending = selectedPendingDays.some(
-            (d) =>
-              d.getFullYear() === year &&
-              d.getMonth() === month &&
-              d.getDate() === day
+            (d) => d.getTime() === currentDate.getTime()
           );
 
+          // NOVO: Verifica se o dia atual é o que está sendo visualizado na sidebar
+          const isViewing = viewingDay
+            ? viewingDay.getTime() === currentDate.getTime()
+            : false;
+
+          // NOVO: O dia deve ser destacado se estiver pendente OU sendo visualizado
+          const isHighlighted = isPending || isViewing;
+
           const isToday = currentDate.getTime() === today.getTime();
+          const isNewMonth = day === 1;
+
+          const isClickable =
+            (!isSelectionMode && (isAvailable || hasEvents)) ||
+            (isSelectionMode && !isPast && !isWeekend && !isAvailable);
 
           return (
             <div
               key={`${month}-${day}`}
               ref={(el) => {
-                dayRefs.current[index] = el;
+                if (el) dayRefs.current[index] = el;
               }}
               data-month={month}
               data-day={day}
               onClick={() => {
-                if (isPermanentlyDisabled) return;
+                if (!isClickable) return;
 
                 if (isSelectionMode) {
-                  onPendingDaySelect(new Date(year, month, day));
-                } else if (onClick) {
-                  handleDayClick(day, month, year);
+                  onPendingDaySelect(currentDate);
+                } else {
+                  onDayClick(currentDate);
                 }
               }}
               className={`
-                relative group aspect-square
-                -m-px w-full grow font-medium transition-all border-2
-                sm:size-16 lg:size-28 2xl:size-28
-                
-                ${isPending ? "border-blue-500" : "border-slate-200"}
-                
-                ${
-                  isPending
-                    ? "bg-blue-50 z-40"
-                    : isPermanentlyDisabled
-                    ? "bg-slate-50 pointer-events-none"
-                    : isAvailable
-                    ? "bg-blue-50"
-                    : "bg-dotted"
-                }
-                
-                ${
-                  !isPermanentlyDisabled &&
-                  isSelectionMode &&
-                  "cursor-pointer hover:z-30"
-                }
-              `}
+      relative group aspect-square -m-px w-full grow font-medium 
+      transition-all border-2
+      transition-colors
+      sm:size-16 lg:size-28 2xl:size-28
+
+
+      ${isHighlighted ? "border-blue-500 z-40" : "border-slate-200"}
+      ${isClickable ? "cursor-pointer hover:z-30" : ""}
+      
+      ${
+        isSelectionMode && isClickable
+          ? "hover:border-blue-400 hover:bg-blue-50"
+          : ""
+      }
+      
+      ${
+        isPending
+          ? "bg-blue-50 z-40"
+          : isPermanentlyDisabled
+          ? "bg-slate-50 pointer-events-none"
+          : hasEvents && isPast
+          ? "bg-slate-50"
+          : isAvailable
+          ? "bg-blue-50"
+          : "bg-white"
+      }
+    `}
             >
               <span
                 className={`absolute left-1 top-1 flex size-5 items-center justify-center rounded-full text-xs sm:size-6 sm:text-sm lg:left-2 lg:top-2 lg:size-8 lg:text-base ${
@@ -255,7 +272,7 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
                 {day}
               </span>
 
-              {isNewMonth && (
+              {isNewMonth && month >= 0 && month < 12 && (
                 <span className="absolute bottom-0.5 left-0 w-full truncate px-1.5 text-sm font-semibold text-slate-300 sm:bottom-0 sm:text-lg lg:bottom-2.5 lg:left-3.5 lg:-mb-1 lg:w-fit lg:px-0 lg:text-xl 2xl:mb-[-4px] 2xl:text-2xl">
                   {monthNames[month]}
                 </span>
@@ -268,12 +285,14 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
                       role === "aluno"
                         ? getPsicologoData(event.psicologoId)
                         : getPacienteData(event.pacienteId);
-
                     return (
                       <div
                         key={event.id}
                         className="flex items-center rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800 whitespace-nowrap"
                       >
+                        <span className="font-semibold">
+                          {formatEventTime(event.horario)}
+                        </span>
                         <span className="ml-1 truncate">
                           {personToShow?.name || "..."}
                         </span>
@@ -282,54 +301,6 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
                   })}
                 </div>
               </div>
-
-              {showAddIconInDay && !isPermanentlyDisabled && (
-                <button
-                  onClick={onButtonClick}
-                  type="button"
-                  className="absolute right-2 top-2 rounded-full opacity-0 transition-all focus:opacity-100 group-hover:opacity-100"
-                >
-                  <svg
-                    className="size-8 scale-90 text-blue-500 transition-all hover:scale-100 group-focus:scale-100"
-                    aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4.243a1 1 0 1 0-2 0V11H7.757a1 1 0 1 0 0 2H11v3.243a1 1 0 1 0 2 0V13h3.243a1 1 0 1 0 0-2H13V7.757Z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-              )}
-
-              {showAddIconInDay && !isPermanentlyDisabled && (
-                <button
-                  onClick={onButtonClick}
-                  type="button"
-                  className="absolute right-2 top-2 rounded-full opacity-0 transition-all focus:opacity-100 group-hover:opacity-100"
-                >
-                  <svg
-                    className="size-8 scale-90 text-blue-500 transition-all hover:scale-100 group-focus:scale-100"
-                    aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4.243a1 1 0 1 0-2 0V11H7.757a1 1 0 1 0 0 2H11v3.243a1 1 0 1 0 2 0V13h3.243a1 1 0 1 0 0-2H13V7.757Z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-              )}
             </div>
           );
         })}
@@ -338,16 +309,18 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
   }, [
     year,
     availability,
-    events,
+    eventsByDate,
     isSelectionMode,
     selectedPendingDays,
     role,
     onClick,
     onPendingDaySelect,
+    onDayClick,
+    viewingDay
   ]);
 
   useEffect(() => {
-    scrollToDay(today.getMonth(), 1, false);
+    scrollToDay(today.getMonth(), today.getDate(), true, true);
     const calendarContainer = document.querySelector(".calendar-container");
 
     const observer = new IntersectionObserver(
@@ -358,7 +331,9 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
               entry.target.getAttribute("data-month")!,
               10
             );
-            setSelectedMonth(month);
+            if (!isNaN(month) && month >= 0 && month < 12) {
+              setSelectedMonth(month);
+            }
           }
         });
       },
@@ -381,8 +356,11 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
   }, []);
 
   return (
-    <div className="no-scrollbar calendar-container max-h-full overflow-y-scroll rounded-t-2xl bg-white pb-10 text-slate-800 shadow-xl">
-      <div className="sticky -top-px z-50 w-full rounded-t-2xl bg-white px-5 pt-7 sm:px-8 sm:pt-8">
+    <div
+      className={`no-scrollbar calendar-container h-full overflow-y-auto bg-white 
+      pb-10 text-slate-800 shadow-interface rounded-tl-2xl ${className}`}
+    >
+      <div className="sticky -top-px z-50 w-full bg-white px-5 pt-7 sm:px-8 sm:pt-8">
         <div className="mb-4 flex w-full flex-wrap items-center justify-between gap-6">
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <Select
@@ -493,7 +471,13 @@ export const Select = ({
       name={name}
       value={value}
       onChange={onChange}
-      className="cursor-pointer rounded-lg border border-gray-300 bg-white py-1.5 pl-2 pr-6 text-sm font-medium text-gray-900 hover:bg-gray-100 sm:rounded-xl sm:py-2.5 sm:pl-3 sm:pr-8"
+      className={`
+        w-full cursor-pointer rounded-lg border border-gray-300 bg-white 
+        py-2 pl-3 pr-10 text-sm font-medium text-gray-900 
+        hover:bg-gray-100 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200
+        sm:rounded-xl sm:py-2.5 sm:pl-4 sm:pr-12 
+        appearance-none 
+      `}
       required
     >
       {options.map((option) => (
@@ -502,9 +486,10 @@ export const Select = ({
         </option>
       ))}
     </select>
-    <span className="pointer-events-none absolute inset-y-0 right-0 ml-3 flex items-center pr-1 sm:pr-2">
+
+    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 sm:pr-4">
       <svg
-        className="size-5 text-slate-600"
+        className="size-5 text-slate-500"
         viewBox="0 0 20 20"
         fill="currentColor"
         aria-hidden="true"

@@ -30,6 +30,17 @@ const mockPsicologosDatabase: { [id: string]: { name: string; avatarUrl: string 
   "CRsiWje2vKiLsr5fCpxW": { name: "Ester Ravette", avatarUrl: 'https://i.pravatar.cc/40?u=ester' },
 };
 
+// Função para formatar apenas a hora
+export const formatEventTime = (isoString: string) => {
+  const date = new Date(isoString);
+  // Retorna a hora no formato HH:mm (ex: "14:00")
+  return new Intl.DateTimeFormat('pt-BR', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    hour12: false 
+  }).format(date);
+};
+
 // Função para buscar dados do paciente
 export const getPacienteData = (pacienteId: string) => {
   return mockPacientesDatabase[pacienteId] || { name: 'Paciente Desconhecido', avatarUrl: 'https://i.pravatar.cc/40' };

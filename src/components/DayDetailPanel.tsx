@@ -1,84 +1,131 @@
-import React from 'react';
-import { X, Clock } from 'lucide-react';
-import type { Consulta } from '../features/psychologist/services/apiService'; 
+"use client";
 
-const monthNames = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-];
+import React, { useState } from "react";
+import ConfirmationModal from './ui/confirmartion/ConfirmationModal';
+import { X, Pencil, Clock, Calendar as CalendarIcon, Ban } from "lucide-react";
+
+interface Event {
+  id: string;
+  title: string;
+  start: string;
+}
 
 interface DayDetailPanelProps {
-  selectedDate: Date | null;
-  availability: string[];
-  events: Consulta[];
+  day: Date;
+  availabilityForDay: string[];
+  eventsForDay: Event[];
   onClose: () => void;
-  onSetAvailabilityClick: (date: Date) => void;
+  onEdit: () => void;
+  onBlockDay: (day: Date) => void;
 }
 
 export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
-  selectedDate,
-  availability,
-  events,
+  day,
+  availabilityForDay,
+  eventsForDay,
   onClose,
-  onSetAvailabilityClick, 
+  onEdit,
+  onBlockDay,
 }) => {
-  if (!selectedDate) return null;
+  const [isConfirmModalOpen, setConfirmModalOpen] = useState(false);
 
-  const formattedDate = `${selectedDate.getDate()} de ${monthNames[selectedDate.getMonth()]}, ${selectedDate.getFullYear()}`;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const isPastDay = day < today;
 
-  const hasAvailability = availability && availability.length > 0;
-  const hasEvents = events && events.length > 0;
+  const formattedDate = new Intl.DateTimeFormat("pt-BR", {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(day);
+  
+  const handleConfirmBlock = () => {
+    onBlockDay(day);
+    setConfirmModalOpen(false);
+  };
 
   return (
-    <div className="w-full md:w-80 lg:w-96 border-l border-gray-200 bg-white flex flex-col h-full">
-      <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-        <h3 className="font-semibold text-lg text-gray-800">{formattedDate}</h3>
-        <button onClick={onClose} className="p-1 rounded-full text-gray-500 hover:bg-gray-100">
-          <X size={20} />
-        </button>
-      </div>
+    <>
+      <div className="h-full w-96 flex-shrink-0 bg-white shadow-interface border-l border-gray-200 z-20 flex flex-col p-6 rounded-tr-2xl rounded-br-2xl">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-gray-800">Detalhes do Dia</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-800">
+            <X size={24} />
+          </button>
+        </div>
 
-      <div className="flex-1 p-4 overflow-y-auto custom-scrollbar">
-        {hasEvents && (
+        <p className="text-md text-gray-600 mb-6 capitalize">{formattedDate}</p>
+
+        <div className="flex-grow overflow-y-auto">
           <div className="mb-6">
-            <h4 className="font-medium text-gray-700 mb-2">Consultas Agendadas</h4>
-            <div className="flex flex-col space-y-2">
-              {events.map(event => (
-                  <div key={event.id} className="text-sm p-2 rounded-md bg-blue-50 text-blue-800">{event.horario} - Paciente X</div>
-              ))}
-            </div>
+            <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
+              <CalendarIcon size={16} className="mr-2"/>Consultas Agendadas
+            </h3>
+            {eventsForDay.length > 0 ? (
+              <ul className="space-y-2">
+                {eventsForDay.map(event => (
+                  <li key={event.id} className="bg-blue-50 p-3 rounded-md text-sm">
+                    <p className="font-medium text-blue-800">{new Date(event.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                    <p className="text-blue-700">{event.title}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-500 mt-2">
+                Nenhuma consulta agendada para este dia.
+              </p>
+            )}
+          </div>
+
+          <div className="mb-6">
+            <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
+              <Clock size={16} className="mr-2"/>Horários Disponíveis
+            </h3>
+            {availabilityForDay.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {availabilityForDay.sort().map(time => (
+                  <span key={time} className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
+                    {time}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 mt-2">
+                Nenhum horário disponível para este dia.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {!isPastDay && (
+          <div className="mt-auto pt-4 border-t border-gray-200 flex flex-col gap-3">
+            <button 
+              onClick={onEdit}
+              className="w-full inline-flex items-center justify-center h-10 px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+            >
+              <Pencil className="w-4 h-4 mr-2" />
+              Editar Horários
+            </button>
+            
+            <button 
+              onClick={() => setConfirmModalOpen(true)}
+              className="w-full inline-flex items-center justify-center h-10 px-4 py-2 rounded-md bg-red-50 text-red-700 text-sm font-medium hover:bg-red-100"
+            >
+              <Ban className="w-4 h-4 mr-2" />
+              Bloquear Dia
+            </button>
           </div>
         )}
-
-        {hasAvailability && (
-          <div className="mb-6">
-            <h4 className="font-medium text-gray-700 mb-2">Horários Disponíveis</h4>
-            <div className="flex flex-wrap gap-2">
-              {availability.map(time => (
-                <div key={time} className="text-sm font-semibold py-1 px-2.5 rounded-full bg-gray-100 text-gray-700">
-                  {time}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {!hasAvailability && !hasEvents && (
-            <div className="text-center py-10">
-                <Clock size={40} className="mx-auto text-gray-300 mb-2" />
-                <p className="text-sm text-gray-500">Nenhum horário disponível para este dia.</p>
-            </div>
-        )}
       </div>
 
-      <div className="p-4 border-t border-gray-200">
-        <button
-          onClick={() => onSetAvailabilityClick(selectedDate)}
-          className="w-full h-10 px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
-        >
-          {hasAvailability ? 'Editar Horários' : 'Disponibilizar Horários'}
-        </button>
-      </div>
-    </div>
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        title="Confirmar Bloqueio"
+        description="Tem certeza que deseja bloquear este dia? Todos os horários disponíveis serão removidos."
+        onConfirm={handleConfirmBlock}
+        onCancel={() => setConfirmModalOpen(false)}
+      />
+    </>
   );
 };
