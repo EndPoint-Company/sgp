@@ -1,7 +1,9 @@
+// src/components/ContinuousCalendar.tsx
+
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import type { Consulta } from "../features/psychologist/services/apiService";
+import type { Consulta } from "../features/psychologist/services/appointmentService.ts";
 import {
   getPacienteData,
   getPsicologoData,
@@ -42,7 +44,7 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
   onButtonClick = () => {},
   events = [],
   role,
-  currentUserId,
+  //currentUserId,
   availability = {},
   isSelectionMode = false,
   selectedPendingDays = [],
