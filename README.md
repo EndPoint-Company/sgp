@@ -37,7 +37,7 @@ O **SGP** (Sistema de Gerência de Psicoterapia) é uma plataforma web que visa 
 
 ---
 
-## 👤 Público-Alvo
+## Público-Alvo
 
 * **Estudantes da UFC Quixadá**: com idades entre 18 e 25 anos, buscando apoio psicológico durante sua jornada acadêmica.
 * **Psicólogos da Instituição**: responsáveis por organizar e executar os atendimentos.
@@ -47,7 +47,7 @@ O **SGP** (Sistema de Gerência de Psicoterapia) é uma plataforma web que visa 
 
 ## Funcionalidades
 
-### 👩‍🎓 Usuários (Alunos/Docentes)
+###  Usuários (Alunos/Docentes)
 
 * Cadastro com e-mail institucional
 * Login seguro
@@ -70,7 +70,7 @@ O **SGP** (Sistema de Gerência de Psicoterapia) é uma plataforma web que visa 
 * Publicação de eventos temáticos
 * Notificações automáticas e e-mails aos alunos
 
-### ⚙️ Outras funcionalidades
+### Outras funcionalidades
 
 * Acessibilidade (modo de contraste, audiodescrição, teclado, leitores de tela)
 * Upload de arquivos e anexos no perfil ou agendamentos
@@ -87,7 +87,7 @@ O **SGP** (Sistema de Gerência de Psicoterapia) é uma plataforma web que visa 
 
 ---
 
-## 📦 Instalação e Execução
+## Instalação e Execução
 
 ### Pré-requisitos
 
