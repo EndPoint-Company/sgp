@@ -322,7 +322,7 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
               const isNewMonth = day === 1 && isCurrentMonth;
 
               if (isPending) {
-                dayBgColor = "bg-blue-50 z-50";
+                dayBgColor = "bg-blue-50 z-40";
               } else if (!isCurrentMonth || isPast || isWeekend) {
                 dayBgColor = "bg-slate-100";
                 textColorClass = "text-slate-400";
