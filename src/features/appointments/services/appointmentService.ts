@@ -1,3 +1,5 @@
+// src/features/appointments/services/appointmentService.ts
+
 import apiClient from "../../../services/apiClient";
 import type { Consulta, NewConsulta, ConsultaStatus } from "../types";
 import { AxiosError } from "axios";

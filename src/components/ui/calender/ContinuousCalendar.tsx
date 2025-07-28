@@ -1,35 +1,32 @@
-// src/components/ContinuousCalendar.tsx
-
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import type { Consulta } from "../../../features/psychologist/services/appointmentService.ts.ts";
-import {
-  getPacienteData,
-  getPsicologoData,
-  formatEventTime,
-} from "../../../features/psychologist/data/mockApi.ts";
+// Corrigido: Importa o tipo Consulta do local correto e centralizado
+import type { Consulta, ConsultaStatus } from "../../../features/appointments/types";
+// Corrigido: Apenas a função de formatar o tempo é necessária aqui
+import { formatAppointmentDate as formatEventTime } from "../../../utils/dataHelpers";
+
 
 const daysOfWeek = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const monthNames = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ];
+
+// Adiciona a propriedade opcional 'participantName' que é recebida da página pai
+type EventConsulta = Consulta & { 
+  id: string;
+  alunoId: string;
+  psicologoId: string;
+  horario: string;
+  status: ConsultaStatus;
+  participantName?: string;
+};
 
 interface ContinuousCalendarProps {
   role: "aluno" | "psicologo";
   currentUserId: string;
-  events?: Consulta[];
+  events?: EventConsulta[];
   availability?: Record<string, string[]>;
   onDayClick: (date: Date) => void;
   onAddClick?: (date: Date) => void;
@@ -40,9 +37,9 @@ interface ContinuousCalendarProps {
   className?: string;
 }
 
+
 export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
   role,
-  //currentUserId,
   events = [],
   availability = {},
   onDayClick,
@@ -56,7 +53,7 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const dayRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const dayRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(today.getMonth());
   const [scrollToTarget, setScrollToTarget] = useState<{ date: Date; instant: boolean } | null>(null);
@@ -66,21 +63,23 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
     value: `${index}`,
   }));
 
+  const formatDateKey = (currentDate: Date) => {
+    return `${currentDate.getFullYear()}-${String(
+      currentDate.getMonth() + 1
+    ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
+  }
+
   const scrollToDay = (
-    monthIndex: number,
-    dayIndex: number,
+    dateToScroll: Date,
     center = true,
     instant = false
   ) => {
-    const date = new Date(year, monthIndex, dayIndex);
-    const key = formatDateKey(date);
+    const key = formatDateKey(dateToScroll);
     const targetElement = dayRefs.current.get(key);
-
     const headerElement = document.querySelector("#calendar-header");
+    const container = document.querySelector(".calendar-container");
 
-    if (targetElement) {
-      const container = document.querySelector(".calendar-container");
-      if (container && headerElement) {
+    if (targetElement && container && headerElement) {
         const containerRect = container.getBoundingClientRect();
         const elementRect = targetElement.getBoundingClientRect();
         const headerHeight = (headerElement as HTMLElement).offsetHeight;
@@ -100,14 +99,10 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
           top: container.scrollTop + offset,
           behavior: instant ? "auto" : "smooth",
         });
-      }
     }
   };
-
-  const handlePrevYear = () => setYear((prevYear) => prevYear - 1);
-  const handleNextYear = () => setYear((prevYear) => prevYear + 1);
-
-  const handleMonthChange = (event: { target: { value: string } }) => {
+  
+  const handleMonthChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const monthIndex = parseInt(event.target.value, 10);
     setSelectedMonth(monthIndex);
     setScrollToTarget({ date: new Date(year, monthIndex, 1), instant: true });
@@ -117,21 +112,20 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
     const todayDate = new Date();
     todayDate.setHours(0, 0, 0, 0);
     
-    if (year === todayDate.getFullYear()) {
-      setScrollToTarget({ date: todayDate, instant: false });
-    } else {
+    if (year !== todayDate.getFullYear()) {
       setYear(todayDate.getFullYear());
-      setScrollToTarget({ date: todayDate, instant: false });
     }
+    setSelectedMonth(todayDate.getMonth());
+    setScrollToTarget({ date: todayDate, instant: false });
   };
+  
+  const handlePrevYear = () => setYear((prevYear) => prevYear - 1);
+  const handleNextYear = () => setYear((prevYear) => prevYear + 1);
 
   const eventsByDate = useMemo(() => {
-    const grouped: { [key: string]: Consulta[] } = {};
+    const grouped: { [key: string]: EventConsulta[] } = {};
     events.forEach((event) => {
-      const eventDate = new Date(event.horario);
-      const key = `${eventDate.getFullYear()}-${String(
-        eventDate.getMonth() + 1
-      ).padStart(2, "0")}-${String(eventDate.getDate()).padStart(2, "0")}`;
+      const key = formatDateKey(new Date(event.horario));
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(event);
     });
@@ -140,14 +134,13 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
 
   const calendarContent = useMemo(() => {
     const calendarDays = [];
-    const startDayOfWeek = new Date(year, 0, 1).getDay();
+    const startDate = new Date(year, 0, 1);
+    const startDayOfWeek = startDate.getDay();
+    
     for (let i = 0; i < startDayOfWeek; i++) {
-      const prevYear = new Date(year, 0, 0);
-      const day = prevYear.getDate() - startDayOfWeek + 1 + i;
-      calendarDays.push({
-        date: new Date(year - 1, 11, day),
-        isCurrentMonth: false,
-      });
+        const day = new Date(startDate);
+        day.setDate(startDate.getDate() - (startDayOfWeek - i));
+        calendarDays.push({ date: day, isCurrentMonth: false });
     }
 
     for (let month = 0; month < 12; month++) {
@@ -180,39 +173,21 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
 
  useEffect(() => {
     if (!scrollToTarget) return;
-
-    const key = formatDateKey(scrollToTarget.date);
-    const targetElement = dayRefs.current.get(key); // Busca direta no Map
-    const container = document.querySelector(".calendar-container");
-    const headerElement = document.querySelector("#calendar-header");
-
-    if (targetElement && container && headerElement) {
-      const headerHeight = (headerElement as HTMLElement).offsetHeight;
-    
-      const newScrollTop = targetElement.offsetTop - headerHeight; 
-      
-      container.scrollTo({
-        top: newScrollTop,
-        behavior: scrollToTarget.instant ? "auto" : "smooth", 
-      });
-    }
-    
+    // CORRIGIDO: Passa o objeto Date diretamente
+    scrollToDay(scrollToTarget.date, true, scrollToTarget.instant);
     setScrollToTarget(null);
-
-  }, [scrollToTarget, year, calendarContent]); 
+  }, [scrollToTarget]); 
 
   useEffect(() => {
-    scrollToDay(today.getMonth(), today.getDate(), true, true);
+    // CORRIGIDO: Passa o objeto Date diretamente
+    scrollToDay(new Date(), true, true);
 
     const calendarContainer = document.querySelector(".calendar-container");
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            const month = parseInt(
-              entry.target.getAttribute("data-month")!,
-              10
-            );
+            const month = parseInt(entry.target.getAttribute("data-month")!, 10);
             if (!isNaN(month) && month >= 0 && month < 12)
               setSelectedMonth(month);
           }
@@ -226,12 +201,6 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
     });
     return () => observer.disconnect();
   }, []);
-
-  function formatDateKey(currentDate: Date) {
-    return `${currentDate.getFullYear()}-${String(
-      currentDate.getMonth() + 1
-    ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
-  }
 
   return (
     <div
@@ -258,63 +227,22 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
             </button>
           </div>
           <div className="flex w-fit items-center justify-between">
-            <button
-              onClick={handlePrevYear}
-              className="rounded-full border border-slate-300 p-1 transition-colors hover:bg-slate-100 sm:p-2"
-            >
-              <svg
-                className="size-5 text-slate-800"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="m15 19-7-7 7-7"
-                />
+            <button onClick={handlePrevYear} className="rounded-full border border-slate-300 p-1 transition-colors hover:bg-slate-100 sm:p-2">
+              <svg className="size-5 text-slate-800" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m15 19-7-7 7-7"/>
               </svg>
             </button>
-            <h1 className="min-w-16 text-center text-lg font-semibold sm:min-w-20 sm:text-xl">
-              {year}
-            </h1>
-            <button
-              onClick={handleNextYear}
-              className="rounded-full border border-slate-300 p-1 transition-colors hover:bg-slate-100 sm:p-2"
-            >
-              <svg
-                className="size-5 text-slate-800"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="m9 5 7 7-7 7"
-                />
+            <h1 className="min-w-16 text-center text-lg font-semibold sm:min-w-20 sm:text-xl">{year}</h1>
+            <button onClick={handleNextYear} className="rounded-full border border-slate-300 p-1 transition-colors hover:bg-slate-100 sm:p-2">
+              <svg className="size-5 text-slate-800" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m9 5 7 7-7 7"/>
               </svg>
             </button>
           </div>
         </div>
         <div className="grid w-full grid-cols-7 justify-between text-slate-500">
           {daysOfWeek.map((day) => (
-            <div
-              key={day}
-              className="w-full border-b border-slate-200 py-2 text-center font-semibold"
-            >
-              {day}
-            </div>
+            <div key={day} className="w-full border-b border-slate-200 py-2 text-center font-semibold">{day}</div>
           ))}
         </div>
       </div>
@@ -324,90 +252,49 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
             {week.map(({ date: currentDate, isCurrentMonth }) => {
               const day = currentDate.getDate();
               const month = currentDate.getMonth();
+              const dateKey = formatDateKey(currentDate);
 
               const isPast = currentDate < today;
-              const isWeekend =
-                currentDate.getDay() === 0 || currentDate.getDay() === 6;
-              const dateKey = formatDateKey(currentDate);
+              const isWeekend = currentDate.getDay() === 0 || currentDate.getDay() === 6;
               const hasEvents = (eventsByDate[dateKey] || []).length > 0;
-              const isAvailable =
-                availability[dateKey] && availability[dateKey].length > 0;
+              const isAvailable = availability[dateKey] && availability[dateKey].length > 0;
+              const isPending = role === "psicologo" && selectedPendingDays.some((d) => d.getTime() === currentDate.getTime());
+              const isViewing = viewingDay ? viewingDay.getTime() === currentDate.getTime() : false;
+              const isHighlighted = isPending || isViewing;
+              const isTodayDate = currentDate.getTime() === today.getTime();
+              const isNewMonth = day === 1 && isCurrentMonth;
 
               let isClickable = false;
               let dayBgColor = "bg-slate-100";
               let textColorClass = "text-slate-800";
+              
+              if (isPending) { dayBgColor = "bg-blue-50 z-40"; }
+              else if (!isCurrentMonth || isPast || isWeekend) { dayBgColor = "bg-slate-100"; textColorClass = "text-slate-400"; }
+              else if (isAvailable) { dayBgColor = "bg-white"; }
+              else { dayBgColor = "bg-slate-50"; }
 
-              const isPending =
-                role === "psicologo" &&
-                selectedPendingDays.some(
-                  (d) => d.getTime() === currentDate.getTime()
-                );
-
-              const isViewing = viewingDay
-                ? viewingDay.getTime() === currentDate.getTime()
-                : false;
-              const isHighlighted = isPending || isViewing;
-
-              const isTodayDate = currentDate.getTime() === today.getTime();
-              const isNewMonth = day === 1 && isCurrentMonth;
-
-              if (isPending) {
-                dayBgColor = "bg-blue-50 z-40";
-              } else if (!isCurrentMonth || isPast || isWeekend) {
-                dayBgColor = "bg-slate-100";
-                textColorClass = "text-slate-400";
-              } else if (isAvailable) {
-                dayBgColor = "bg-white";
-              } else {
-                dayBgColor = "bg-slate-50";
-              }
-
-              if (role === "aluno") {
-                isClickable = (isAvailable && !isPast) || hasEvents;
-              } else {
-                const isPermanentlyDisabled =
-                  (isPast || isWeekend) && !hasEvents;
-                isClickable =
-                  (!isSelectionMode && (isAvailable || hasEvents)) ||
-                  (isSelectionMode && !isPast && !isWeekend && !isAvailable);
+              if (role === "aluno") { isClickable = (isAvailable && !isPast) || hasEvents; }
+              else {
+                const isPermanentlyDisabled = (isPast || isWeekend) && !hasEvents;
+                isClickable = (!isSelectionMode && (isAvailable || hasEvents)) || (isSelectionMode && !isPast && !isWeekend && !isAvailable);
                 if (isPermanentlyDisabled) dayBgColor += " pointer-events-none";
               }
 
               return (
                 <div
                   key={dateKey}
-                  ref={(el) => {
-                    const map = dayRefs.current;
-                    if (el) {
-                      map.set(dateKey, el);
-                    } else {
-                      map.delete(dateKey);
-                    }
-                  }}
+                  ref={(el) => { dayRefs.current.set(dateKey, el); }}
                   data-month={currentDate.getMonth()}
                   data-day={currentDate.getDate()}
                   onClick={() => {
                     if (isClickable) {
-                      if (role === "psicologo" && isSelectionMode) {
-                        onPendingDaySelect(currentDate);
-                      } else {
-                        onDayClick(currentDate);
-                      }
+                      if (role === "psicologo" && isSelectionMode) { onPendingDaySelect(currentDate); }
+                      else { onDayClick(currentDate); }
                     }
                   }}
-                  className={`relative group aspect-square -m-px w-full grow font-medium transition-all border-2 transition-colors sm:size-16 lg:size-28 2xl:size-28 ${
-                    isHighlighted ? "border-blue-500 z-40" : "border-slate-200"
-                  } ${isClickable ? "cursor-pointer" : ""} ${
-                    role === "psicologo" && isSelectionMode && isClickable
-                      ? "hover:border-blue-400 hover:bg-blue-50 hover:z-40"
-                      : ""
-                  } ${dayBgColor}`}
+                  className={`relative group aspect-square -m-px w-full grow font-medium transition-all border-2 ${isHighlighted ? "border-blue-500 z-40" : "border-slate-200"} ${isClickable ? "cursor-pointer" : ""} ${ role === "psicologo" && isSelectionMode && isClickable ? "hover:border-blue-400 hover:bg-blue-50 hover:z-40" : "" } ${dayBgColor}`}
                 >
-                  <span
-                    className={`absolute left-1 top-1 flex size-5 items-center justify-center rounded-full text-xs sm:size-6 sm:text-sm lg:left-2 lg:top-2 lg:size-8 lg:text-base ${
-                      isTodayDate ? "bg-blue-500 font-semibold text-white" : ""
-                    } ${textColorClass}`}
-                  >
+                  <span className={`absolute left-1 top-1 flex size-5 items-center justify-center rounded-full text-xs sm:size-6 sm:text-sm lg:left-2 lg:top-2 lg:size-8 lg:text-base ${isTodayDate ? "bg-blue-500 font-semibold text-white" : ""} ${textColorClass}`}>
                     {day}
                   </span>
                   {isNewMonth && (
@@ -415,67 +302,35 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
                       {monthNames[month]}
                     </span>
                   )}
-
                   <div className="absolute inset-x-0 top-7 bottom-0 overflow-hidden px-1 pt-1 sm:top-8 lg:top-12">
                     <div className="flex flex-col gap-1">
                       {(() => {
                         const dayEvents = eventsByDate[dateKey] || [];
-                        const totalEvents = dayEvents.length;
-
-                        if (totalEvents === 0) return null;
-
-                        const displayLimit = totalEvents > 2 ? 1 : 2;
-                        const eventsToDisplay = dayEvents.slice(
-                          0,
-                          displayLimit
-                        );
-                        const remainingCount =
-                          totalEvents - eventsToDisplay.length;
+                        if (dayEvents.length === 0) return null;
+                        const displayLimit = 2;
+                        const eventsToDisplay = dayEvents.slice(0, displayLimit);
+                        const remainingCount = dayEvents.length - eventsToDisplay.length;
 
                         return (
                           <>
                             {eventsToDisplay.map((event) => {
-                              const personToShow =
-                                role === "aluno"
-                                  ? getPsicologoData(event.psicologoId)
-                                  : getPacienteData(event.pacienteId);
-
-                              let pillColorClasses =
-                                "bg-gray-100 text-gray-800";
+                              let pillColorClasses = "bg-gray-100 text-gray-800";
                               switch (event.status) {
-                                case "confirmada":
-                                  pillColorClasses =
-                                    "bg-blue-100 text-blue-800";
-                                  break;
-                                case "aguardando aprovacao":
-                                  pillColorClasses =
-                                    "bg-yellow-100 text-yellow-800";
-                                  break;
-                                case "passada":
-                                  pillColorClasses =
-                                    "bg-slate-200 text-slate-500";
-                                  break;
+                                case "confirmada": pillColorClasses = "bg-blue-100 text-blue-800"; break;
+                                case "aguardando_aprovacao": pillColorClasses = "bg-yellow-100 text-yellow-800"; break;
+                                case "concluida": pillColorClasses = "bg-slate-200 text-slate-500"; break;
                               }
 
                               return (
-                                <div
-                                  key={event.id}
-                                  className={`flex items-center rounded px-1.5 py-0.5 text-xs whitespace-nowrap ${pillColorClasses}`}
-                                >
-                                  <span className="font-semibold">
-                                    {formatEventTime(event.horario)}
-                                  </span>
-                                  <span className="ml-1 truncate">
-                                    {personToShow?.name || "..."}
-                                  </span>
+                                <div key={event.id} className={`flex items-center rounded px-1.5 py-0.5 text-xs whitespace-nowrap ${pillColorClasses}`}>
+                                  <span className="font-semibold">{formatEventTime(event.horario).time}</span>
+                                  <span className="ml-1 truncate">{event.participantName || "..."}</span>
                                 </div>
                               );
                             })}
-
                             {remainingCount > 0 && (
                               <div className="text-xs font-medium text-blue-800 px-1.5 py-0.5 ">
-                                + {remainingCount}{" "}
-                                {remainingCount > 1 ? "outros" : "outro"}
+                                + {remainingCount} {remainingCount > 1 ? "outros" : "outro"}
                               </div>
                             )}
                           </>
@@ -484,24 +339,9 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
                     </div>
                   </div>
                   {role === "aluno" && isClickable && !isPast && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onAddClick(currentDate);
-                      }}
-                      type="button"
-                      className="absolute right-2 top-2 rounded-full opacity-0 transition-opacity focus:opacity-100 group-hover:opacity-100"
-                    >
-                      <svg
-                        className="size-8 scale-90 text-blue-500 transition-transform hover:scale-100"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4.243a1 1 0 1 0-2 0V11H7.757a1 1 0 1 0 0 2H11v3.243a1 1 0 1 0 2 0V13h3.243a1 1 0 1 0 0-2H13V7.757Z"
-                          clipRule="evenodd"
-                        />
+                    <button onClick={(e) => { e.stopPropagation(); onAddClick(currentDate); }} type="button" className="absolute right-2 top-2 rounded-full opacity-0 transition-opacity focus:opacity-100 group-hover:opacity-100">
+                      <svg className="size-8 scale-90 text-blue-500 transition-transform hover:scale-100" fill="currentColor" viewBox="0 0 24 24">
+                        <path fillRule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4.243a1 1 0 1 0-2 0V11H7.757a1 1 0 1 0 0 2H11v3.243a1 1 0 1 0 2 0V13h3.243a1 1 0 1 0 0-2H13V7.757Z" clipRule="evenodd" />
                       </svg>
                     </button>
                   )}
