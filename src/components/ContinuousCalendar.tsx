@@ -54,9 +54,10 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const dayRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const dayRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(today.getMonth());
+  const [scrollToTarget, setScrollToTarget] = useState<{ date: Date; instant: boolean } | null>(null);
 
   const monthOptions = monthNames.map((month, index) => ({
     name: month,
@@ -69,12 +70,9 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
     center = true,
     instant = false
   ) => {
-    const targetElement = dayRefs.current.find(
-      (ref) =>
-        ref &&
-        ref.getAttribute("data-month") === `${monthIndex}` &&
-        ref.getAttribute("data-day") === `${dayIndex}`
-    );
+    const date = new Date(year, monthIndex, dayIndex);
+    const key = formatDateKey(date);
+    const targetElement = dayRefs.current.get(key);
 
     const headerElement = document.querySelector("#calendar-header");
 
@@ -110,12 +108,19 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
   const handleMonthChange = (event: { target: { value: string } }) => {
     const monthIndex = parseInt(event.target.value, 10);
     setSelectedMonth(monthIndex);
-    scrollToDay(monthIndex, 1, false, true);
+    setScrollToTarget({ date: new Date(year, monthIndex, 1), instant: true });
   };
 
   const handleTodayClick = () => {
-    setYear(today.getFullYear());
-    scrollToDay(today.getMonth(), today.getDate());
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+    
+    if (year === todayDate.getFullYear()) {
+      setScrollToTarget({ date: todayDate, instant: false });
+    } else {
+      setYear(todayDate.getFullYear());
+      setScrollToTarget({ date: todayDate, instant: false });
+    }
   };
 
   const eventsByDate = useMemo(() => {
@@ -170,6 +175,29 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
     }
     return weeks;
   }, [year]);
+
+ useEffect(() => {
+    if (!scrollToTarget) return;
+
+    const key = formatDateKey(scrollToTarget.date);
+    const targetElement = dayRefs.current.get(key); // Busca direta no Map
+    const container = document.querySelector(".calendar-container");
+    const headerElement = document.querySelector("#calendar-header");
+
+    if (targetElement && container && headerElement) {
+      const headerHeight = (headerElement as HTMLElement).offsetHeight;
+    
+      const newScrollTop = targetElement.offsetTop - headerHeight; 
+      
+      container.scrollTo({
+        top: newScrollTop,
+        behavior: scrollToTarget.instant ? "auto" : "smooth", 
+      });
+    }
+    
+    setScrollToTarget(null);
+
+  }, [scrollToTarget, year, calendarContent]); 
 
   useEffect(() => {
     scrollToDay(today.getMonth(), today.getDate(), true, true);
@@ -347,10 +375,15 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({
                 <div
                   key={dateKey}
                   ref={(el) => {
-                    if (el) dayRefs.current.push(el);
+                    const map = dayRefs.current;
+                    if (el) {
+                      map.set(dateKey, el);
+                    } else {
+                      map.delete(dateKey);
+                    }
                   }}
-                  data-month={month}
-                  data-day={day}
+                  data-month={currentDate.getMonth()}
+                  data-day={currentDate.getDate()}
                   onClick={() => {
                     if (isClickable) {
                       if (role === "psicologo" && isSelectionMode) {
