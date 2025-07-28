@@ -38,6 +38,15 @@ export default function AppointmentCard({
     }
   };
 
+  // Função para formatar o texto do status para exibição
+  const getDisplayStatus = (currentStatus: ConsultaStatus): string => {
+    if (currentStatus.toLowerCase().includes('aguardando')) {
+      return 'Pendente';
+    }
+    // Capitaliza a primeira letra para outros status
+    return currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
+  };
+
   const handleConfirmCancel = () => {
     onCancel?.();
     setIsModalOpen(false);
@@ -97,7 +106,7 @@ export default function AppointmentCard({
         <div className="flex justify-between items-center">
           <span className="text-base text-gray-600">{getDisplayTime(time)}</span>
           <span className={`text-sm font-semibold px-3 py-1 rounded-md ${getStatusStyles()}`}>
-            {status}
+            {getDisplayStatus(status)}
           </span>
         </div>
 
