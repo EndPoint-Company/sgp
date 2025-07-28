@@ -8,17 +8,19 @@ import { formatAppointmentDate } from "../../utils/dataHelpers";
 import { AppointmentsSection } from "../../features/home/components/AppointmentsSection";
 import PsychologistLayout from "../../layouts/PsychologistLayout";
 import { WelcomeBanner } from "../../features/home/components/WelcomeBanner";
-import type { Consulta, ProcessedConsulta } from "../../features/appointments/types";
+import type {
+  Consulta,
+  ProcessedConsulta,
+} from "../../features/appointments/types";
 
 // 1. Importe o hook e o tipo Aluno do nosso provedor de contexto
-import { useUserData, type Aluno } from "../../features/auth/contexts/UserDataProvider";
+import { useUserData, type Aluno } from "../../contexts/UserDataProvider";
 
 // NOVO: Define um tipo mais flexível para o objeto Aluno, que pode ter diferentes propriedades de nome
 type AlunoComNomesPossiveis = Aluno & {
   name?: string;
   displayName?: string;
 };
-
 
 export default function PsychologistHomePage() {
   // --- ESTADO E HOOKS ---
@@ -46,12 +48,15 @@ export default function PsychologistHomePage() {
   }, [user]);
 
   // Função para atualizar o status de uma consulta
-  const handleUpdateStatus = async (id: string, status: "confirmada" | "cancelada") => {
+  const handleUpdateStatus = async (
+    id: string,
+    status: "confirmada" | "cancelada"
+  ) => {
     try {
       await updateConsultaStatus(id, status);
       // Atualiza o estado local para uma resposta de UI instantânea
-      setConsultas(prevConsultas =>
-        prevConsultas.map(c => (c.id === id ? { ...c, status } : c))
+      setConsultas((prevConsultas) =>
+        prevConsultas.map((c) => (c.id === id ? { ...c, status } : c))
       );
     } catch (err) {
       console.error(`Erro ao atualizar status para ${status}:`, err);
@@ -64,9 +69,10 @@ export default function PsychologistHomePage() {
     const processed: ProcessedConsulta[] = consultas.map((consulta) => {
       const aluno = findAlunoById(consulta.alunoId) as AlunoComNomesPossiveis;
       const horarioFormatado = formatAppointmentDate(consulta.horario);
-      
+
       // ALTERADO: Acessa as propriedades de forma segura, sem usar 'any'
-      const participantName = aluno.nome || aluno.name || aluno.displayName || 'Aluno Desconhecido';
+      const participantName =
+        aluno.nome || aluno.name || aluno.displayName || "Aluno Desconhecido";
 
       return {
         ...consulta,
@@ -114,7 +120,9 @@ export default function PsychologistHomePage() {
 
   return (
     <PsychologistLayout>
-      <WelcomeBanner userName={user?.displayName || user?.email || "Psicólogo"} />
+      <WelcomeBanner
+        userName={user?.displayName || user?.email || "Psicólogo"}
+      />
       <div className="space-y-8">
         <AppointmentsSection
           title="Solicitações Pendentes"

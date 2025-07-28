@@ -1,14 +1,28 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import PsychologistLayout from '../../layouts/PsychologistLayout';
 import ScheduleManager from '../../features/schedule/components/ScheduleManager';
 import { useAuth } from '../../features/auth/hooks/useAuth';
+import { useUserData, type Aluno } from '../../contexts/UserDataProvider';
 import { getConsultasByPsicologoId } from '../../features/appointments/services/appointmentService';
 import type { Consulta } from '../../features/appointments/types';
-import { Toast } from '../../components/Toast';
+import { Toast } from '../../components/ui/Toast';
+
+// Define um tipo para a consulta após ser processada com o nome do participante
+export type ProcessedEvent = Consulta & {
+  participantName: string;
+};
+
+// Define um tipo mais flexível para o objeto Aluno
+type AlunoComNomesPossiveis = Aluno & {
+  name?: string;
+  displayName?: string;
+};
 
 export default function PsychologistSchedulePage() {
   // --- LÓGICA E ESTADO ---
   const { user, isLoading: isAuthLoading } = useAuth();
+  const { findAlunoById, isLoading: isUserDataLoading } = useUserData();
+  
   const [consultas, setConsultas] = useState<Consulta[]>([]);
   const [availability, setAvailability] = useState<Record<string, string[]>>({});
   const [isDataLoading, setIsDataLoading] = useState(true);
@@ -27,6 +41,21 @@ export default function PsychologistSchedulePage() {
     }
   }, [user, isAuthLoading]);
 
+  // Processa as consultas para incluir o nome do aluno
+  const processedConsultas = useMemo((): ProcessedEvent[] => {
+    if (!Array.isArray(consultas)) return [];
+    
+    return consultas.map(item => {
+      const aluno = findAlunoById(item.alunoId) as AlunoComNomesPossiveis;
+      const participantName = aluno.nome || aluno.name || aluno.displayName || 'Desconhecido';
+      
+      return {
+        ...item,
+        participantName: participantName, 
+      };
+    });
+  }, [consultas, findAlunoById]);
+
   // Função para exibir o toast de notificação
   const showToast = (message: string) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -37,18 +66,18 @@ export default function PsychologistSchedulePage() {
   };
 
   // --- RENDERIZAÇÃO ---
-  const isLoading = isAuthLoading || isDataLoading;
+  const isLoading = isAuthLoading || isDataLoading || isUserDataLoading;
 
   return (
     <PsychologistLayout>
       <div className="h-full w-full relative">
-        {isLoading && <p>Carregando agenda...</p>}
-        {error && <p className="text-red-500">{error}</p>}
+        {isLoading && <p className="text-center p-8">A carregar agenda...</p>}
+        {error && <p className="text-center p-8 text-red-500">{error}</p>}
         {!isLoading && !error && user && (
           <ScheduleManager
             userRole="psychologist"
             currentUserId={user.uid}
-            consultas={consultas}
+            consultas={processedConsultas} // Passa os dados já processados
             availability={availability}
             setAvailability={setAvailability}
             onShowToast={showToast}

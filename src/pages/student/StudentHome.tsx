@@ -16,8 +16,8 @@ import StudentLayout from "../../layouts/StudentLayout";
 import { WelcomeBanner } from "../../features/home/components/WelcomeBanner";
 
 // Importa o hook do nosso provedor de contexto
-import { useUserData } from "../../features/auth/contexts/UserDataProvider";
-import type { Psicologo } from "../../features/auth/contexts/UserDataProvider";
+import { useUserData } from "../../contexts/UserDataProvider";
+import type { Psicologo } from "../../contexts/UserDataProvider";
 
 // ID fixo para o psicólogo, conforme solicitado
 const FIXED_PSICOLOGO_ID = "KVPBp1zK9KX1xZGvF54bxNHD10r2";
