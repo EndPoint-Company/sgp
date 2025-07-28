@@ -1,6 +1,8 @@
+// src/features/appointments/components/AppointmentsManager.tsx
+
 import React, { useState, useMemo } from "react";
-import RequestCard from "../../components/RequestCard";
-import AppointmentCard from "../../components/AppointmentCard";
+import RequestCard from "./RequestCard";
+import AppointmentCard from "./AppointmentCard";
 import { Input } from "../../../components/ui/input";
 import { Button } from "../../../components/ui/button";
 import {
@@ -13,70 +15,87 @@ import {
   Search,
   Plus,
 } from "lucide-react";
-import {
-  mockFirebaseData,
-  getPacienteData,
-  formatAppointmentDate,
-} from "../data/mockApi";
-import type { Consulta } from "../services/apiService";
+import type { ConsultaStatus } from "../../../features/appointments/types";
 
-export default function AppointmentDetailsPage() {
+interface ProcessedConsulta {
+  id: string;
+  participantName: string;
+  participantAvatarUrl?: string;
+  date: string;
+  time: string;
+  status: ConsultaStatus;
+  horario: string;
+}
+
+interface AppointmentsManagerProps {
+  consultas?: ProcessedConsulta[]; // <- agora permite undefined
+  userRole: "student" | "psychologist";
+  isLoading: boolean;
+  error: string | null;
+  onUpdateStatus: (id: string, status: "confirmada" | "cancelada") => void;
+}
+
+export default function AppointmentsManager({
+  consultas,
+  userRole,
+  isLoading,
+  error,
+  onUpdateStatus,
+}: AppointmentsManagerProps) {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<
     "agendados" | "solicitacoes" | "cancelados" | "passados"
-  >("solicitacoes");
+  >(userRole === "psychologist" ? "solicitacoes" : "agendados");
 
-  const [consultas, setConsultas] = useState<Consulta[]>(mockFirebaseData);
-
-  const handleUpdateStatus = (
-    consultaId: string,
-    newStatus: "confirmada" | "cancelada"
-  ) => {
-    setConsultas((prevConsultas) =>
-      prevConsultas.map((c) =>
-        c.id === consultaId ? { ...c, status: newStatus } : c
-      )
-    );
-    alert(
-      `Consulta ${
-        newStatus === "confirmada" ? "confirmada" : "cancelada"
-      }! A visualização foi atualizada.`
-    );
+  const tabStatusMap: Record<
+    "agendados" | "solicitacoes" | "cancelados",
+    ConsultaStatus
+  > = {
+    agendados: "confirmada",
+    solicitacoes: "aguardando_aprovacao",
+    cancelados: "cancelada",
   };
 
-  const processedData = useMemo(() => {
-    return consultas.map((item) => {
-      const paciente = getPacienteData(item.pacienteId);
-      const schedule = formatAppointmentDate(item.horario);
-      return { ...item, ...paciente, ...schedule };
-    });
-  }, [consultas]);
-
+  // useMemo deve ser chamado sempre, antes de qualquer return condicional
   const filteredData = useMemo(() => {
-    const tabStatusMap: { [key: string]: string } = {
-      agendados: "confirmada",
-      solicitacoes: "aguardando aprovacao",
-      cancelados: "cancelada",
-    };
+    if (!consultas) return [];
     const now = new Date();
-    return processedData
+
+    return consultas
       .filter((item) => {
         if (activeTab === "passados") {
-          return (
-            new Date(item.horario) < now &&
-            (item.status === "confirmada" || item.status === "passada")
-          );
+          return new Date(item.horario) < now && item.status !== "cancelada";
         }
         return item.status === tabStatusMap[activeTab];
       })
-      .filter((item) => item.name.toLowerCase().includes(search.toLowerCase()));
-  }, [activeTab, search, processedData]);
+      .filter((item) =>
+        item.participantName.toLowerCase().includes(search.toLowerCase())
+      );
+  }, [activeTab, search, consultas]);
+
+  // ✅ Proteção contra undefined
+  if (isLoading) return <div>Carregando consultas...</div>;
+  if (error) return <div className="text-red-500">{error}</div>;
+  if (!consultas) return <div>Nenhuma consulta carregada.</div>;
 
   return (
-    <div>
+    <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Agendamentos</h1>
 
+      {/* Abas */}
       <div className="flex items-center gap-6 border-b border-gray-200 mb-4 text-sm">
+        {userRole === "psychologist" && (
+          <button
+            onClick={() => setActiveTab("solicitacoes")}
+            className={`flex items-center gap-1 pb-2 ${
+              activeTab === "solicitacoes"
+                ? "text-blue-600 font-medium border-b-2 border-blue-500"
+                : "text-gray-500"
+            }`}
+          >
+            <RefreshCw className="w-4 h-4" /> Solicitações
+          </button>
+        )}
         <button
           onClick={() => setActiveTab("agendados")}
           className={`flex items-center gap-1 pb-2 ${
@@ -86,16 +105,6 @@ export default function AppointmentDetailsPage() {
           }`}
         >
           <Check className="w-4 h-4" /> Agendados
-        </button>
-        <button
-          onClick={() => setActiveTab("solicitacoes")}
-          className={`flex items-center gap-1 pb-2 ${
-            activeTab === "solicitacoes"
-              ? "text-blue-600 font-medium border-b-2 border-blue-500"
-              : "text-gray-500"
-          }`}
-        >
-          <RefreshCw className="w-4 h-4" /> Solicitações
         </button>
         <button
           onClick={() => setActiveTab("cancelados")}
@@ -119,10 +128,13 @@ export default function AppointmentDetailsPage() {
         </button>
       </div>
 
+      {/* Pesquisa e filtros */}
       <div className="flex flex-wrap md:flex-nowrap md:items-center justify-between gap-4 mb-6">
         <Input
           icon={<Search className="w-4 h-4 text-gray-400" />}
-          placeholder="Pesquisar por nome do paciente"
+          placeholder={`Pesquisar por nome do ${
+            userRole === "psychologist" ? "paciente" : "psicólogo"
+          }`}
           className="max-w-xs"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -144,34 +156,41 @@ export default function AppointmentDetailsPage() {
         </div>
       </div>
 
+      {/* Lista de consultas */}
       <div className="flex gap-4 flex-wrap">
         {filteredData.length > 0 ? (
           filteredData.map((item) => {
-            if (activeTab === "solicitacoes") {
+            const avatar = item.participantAvatarUrl || "";
+
+            if (activeTab === "solicitacoes" && userRole === "psychologist") {
               return (
                 <RequestCard
                   key={item.id}
+                  name={item.participantName}
                   role="Paciente"
-                  {...item}
-                  onAccept={() => handleUpdateStatus(item.id, "confirmada")}
-                  onReject={() => handleUpdateStatus(item.id, "cancelada")}
+                  avatarUrl={avatar}
+                  date={item.date}
+                  time={item.time}
+                  onAccept={() => onUpdateStatus(item.id, "confirmada")}
+                  onReject={() => onUpdateStatus(item.id, "cancelada")}
                 />
               );
             }
-            // Para as outras abas (Agendados, Cancelados, Passados)
+
             return (
               <AppointmentCard
                 key={item.id}
-                name={item.name}
-                role="Paciente"
+                name={item.participantName}
+                role={userRole === "psychologist" ? "Paciente" : "Psicólogo"}
                 date={item.date}
                 time={item.time}
-                status={
-                  item.status.charAt(0).toUpperCase() + item.status.slice(1)
+                status={item.status}
+                avatarUrl={avatar}
+                onCancel={
+                  userRole === "student" || activeTab === "agendados"
+                    ? () => onUpdateStatus(item.id, "cancelada")
+                    : undefined
                 }
-                avatarUrl={item.avatarUrl}
-                // 👇 PASSANDO A FUNÇÃO DE CANCELAR PARA O COMPONENTE
-                onCancel={() => handleUpdateStatus(item.id, "cancelada")}
               />
             );
           })
