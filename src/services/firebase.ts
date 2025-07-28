@@ -1,21 +1,27 @@
-// src/firebase.ts
+// src/services/firebase.ts
 import { initializeApp } from "firebase/app";
+//import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
+
+
 // Suas credenciais do Firebase que você obtém no console do Firebase
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "SEU_AUTH_DOMAIN",
-  projectId: "SEU_PROJECT_ID",
-  storageBucket: "SEU_STORAGE_BUCKET",
-  messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-  appId: "SEU_APP_ID"
+  apiKey: "AIzaSyBHBbJVFbanUPNSambTbcKnvfbF76XoQCM",
+  authDomain: "sgp-pi2.firebaseapp.com",
+  projectId: "sgp-pi2",
+  storageBucket: "sgp-pi2.firebasestorage.app",
+  messagingSenderId: "1064955015900",
+  appId: "1:1064955015900:web:1a7ab172ba9751aa4b7a19",
+  measurementId: "G-ZD2T0WJJ8Z"
 };
 
 // Inicializa o Firebase
 const app = initializeApp(firebaseConfig);
 
-// Exporta os serviços que você usará
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+const auth = getAuth(app);
+const db = getFirestore(app);
+//const analytics = getAnalytics(app);
+
+export { auth, db };

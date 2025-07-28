@@ -1,20 +1,34 @@
-import type { Consulta } from '../services/apiService';
+import type { Consulta } from '../../appointments/types';
 
 // Dados principais das consultas
 export const mockFirebaseData: Consulta[] = [
   {
     "id": "l10YBKR1cKW9WHPzg9Lv",
-    "pacienteId": "mu3Mo6I0eSSD3aWZdYte", // Aluno: Marcos Vitor
+    "alunoId": "mu3Mo6I0eSSD3aWZdYte", // Aluno: Marcos Vitor
     "psicologoId": "CRsiWje2vKiLsr5fCpxW", // Psicóloga: Ester Ravette
     "horario": "2025-07-15T14:00:00Z", // Data futura para aparecer em "Próximos"
     "status": "confirmada"
   },
   {
     "id": "L33ijLuI4egijO8qAAaC",
-    "pacienteId": "2QZfL6ICZwO6UUMBN14I", // Outra aluna, não deve aparecer na tela do Marcos
+    "alunoId": "2QZfL6ICZwO6UUMBN14I", // Outra aluna, não deve aparecer na tela do Marcos
     "psicologoId": "CRsiWje2vKiLsr5fCpxW",
     "horario": "2025-07-21T19:30:00Z",
-    "status": "aguardando aprovacao"
+    "status": "aguardando_aprovacao"
+  },
+  {
+    "id": "L33ijLuI4egijO8qAAaC",
+    "alunoId": "2QZfL6ICZwO6UUMBN14I", // Outra aluna, não deve aparecer na tela do Marcos
+    "psicologoId": "CRsiWje2vKiLsr5fCpxW",
+    "horario": "2025-07-29T15:30:00Z",
+    "status": "cancelada"
+  },
+  {
+    "id": "L33ijLuI4egijO8qAAaC",
+    "alunoId": "2QZfL6ICZwO6UUMBN14I", // Outra aluna, não deve aparecer na tela do Marcos
+    "psicologoId": "CRsiWje2vKiLsr5fCpxW",
+    "horario": "2025-07-29T15:30:00Z",
+    "status": "confirmada"
   },
   // ... outros dados ...
 ];
@@ -28,6 +42,17 @@ const mockPacientesDatabase: { [id: string]: { name: string; avatarUrl: string }
 // MUDANÇA: Adicionado banco de dados de psicólogos
 const mockPsicologosDatabase: { [id: string]: { name: string; avatarUrl: string } } = {
   "CRsiWje2vKiLsr5fCpxW": { name: "Ester Ravette", avatarUrl: 'https://i.pravatar.cc/40?u=ester' },
+};
+
+// Função para formatar apenas a hora
+export const formatEventTime = (isoString: string) => {
+  const date = new Date(isoString);
+  // Retorna a hora no formato HH:mm (ex: "14:00")
+  return new Intl.DateTimeFormat('pt-BR', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    hour12: false 
+  }).format(date);
 };
 
 // Função para buscar dados do paciente
