@@ -68,7 +68,7 @@ export default function PsychologistHomePage() {
   const { proximasConsultas, solicitacoesPendentes } = useMemo(() => {
     const processed: ProcessedConsulta[] = consultas.map((consulta) => {
       const aluno = findAlunoById(consulta.alunoId) as AlunoComNomesPossiveis;
-      const horarioFormatado = formatAppointmentDate(consulta.horario);
+      const horarioFormatado = formatAppointmentDate(consulta.inicio);
 
       // ALTERADO: Acessa as propriedades de forma segura, sem usar 'any'
       const participantName =

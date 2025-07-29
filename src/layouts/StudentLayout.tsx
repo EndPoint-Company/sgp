@@ -61,7 +61,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                   className="w-9 h-9 rounded-full"
                 />
                 <div className="leading-tight">
-                  <h2 className="font-semibold text-sm">Marcos Vitor</h2>
+                  <h2 className="font-semibold text-sm">Você</h2>
                   <p className="text-xs text-gray-500">Paciente</p>
                 </div>
               </div>
