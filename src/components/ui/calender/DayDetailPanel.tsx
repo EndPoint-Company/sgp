@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from "react";
@@ -13,6 +12,8 @@ interface Event {
 }
 
 interface DayDetailPanelProps {
+  // ATUALIZADO: Adicionada a propriedade 'userRole' para controlo de permissões.
+  userRole: "aluno" | "psicologo";
   day: Date;
   availabilityForDay: string[];
   eventsForDay: Event[];
@@ -22,6 +23,8 @@ interface DayDetailPanelProps {
 }
 
 export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
+  // ATUALIZADO: A prop 'userRole' agora é recebida pelo componente.
+  userRole,
   day,
   availabilityForDay,
   eventsForDay,
@@ -45,7 +48,6 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
   }).format(day);
   
   const handleConfirmBlock = () => {
-    // Só chama onBlockDay se ela existir
     if (onBlockDay) {
       onBlockDay(day);
     }
@@ -82,7 +84,7 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
 
         <p className="text-md text-gray-600 mb-6 capitalize">{formattedDate}</p>
 
-               <div className="flex-grow overflow-y-auto">
+              <div className="flex-grow overflow-y-auto">
           <div className="mb-6">
             <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
               <CalendarIcon size={16} className="mr-2"/>Consultas Agendadas
@@ -126,7 +128,8 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
           </div>
         </div>
         
-        {!isPastDay && onEdit && onBlockDay && (
+        {/* CORRIGIDO: A lógica agora verifica explicitamente se o 'userRole' é 'psicologo'. */}
+        {!isPastDay && userRole === 'psicologo' && (
           <div className="mt-auto pt-4 border-t border-gray-200 flex flex-col gap-3">
             <button 
               onClick={onEdit}
